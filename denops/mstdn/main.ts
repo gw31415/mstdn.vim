@@ -45,6 +45,9 @@ export async function main(denops: Denops): Promise<void> {
     ]);
   });
   denops.dispatcher = {
+    timelines(): number[] {
+      return Array.from(BUFFERS.keys());
+    },
     loginUsers(): string[] {
       return listLoginUsers().map(
         ({ server, username }) => `${username}@${server}`,
@@ -157,13 +160,4 @@ export async function main(denops: Denops): Promise<void> {
       }
     },
   };
-
-  // タイマーで接続確認
-  setInterval(() => {
-    for (const [_, b] of BUFFERS) {
-      if (b.socket.status === "CLOSED") {
-        b.socket.reconnect();
-      }
-    }
-  }, 1500);
 }
