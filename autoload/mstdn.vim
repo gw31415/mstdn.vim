@@ -17,3 +17,7 @@ endfunction
 function mstdn#fetch_more(bufnr = bufnr()) abort
 	call denops#notify("mstdn", "fetchMore", [a:bufnr])
 endfunction
+
+function mstdn#timelines() abort
+	return denops#request("mstdn", "timelines", [])
+endfunction
