@@ -122,16 +122,16 @@ export function parseUri(uri: string): Uri {
 			break;
 		case "remote":
 			switch (queryString[1]) {
-				case "hashtag":
-					method = new methods.HashTag({
-						local: true,
-						tag: queryString[1],
-					});
-					break;
 				case "media":
 					method = new methods.Public({
-						only_media: queryString[1] === "media",
+						only_media: true,
 						mode: "local",
+					});
+					break;
+				case undefined:
+					method = new methods.Public({
+						only_media: false,
+						mode: "remote",
 					});
 					break;
 			}
