@@ -61,12 +61,12 @@ export interface Uri {
  * # 有効なURLパターン
  * - mstdn://user@example.com/public
  * - mstdn://user@example.com/public/media
- * - mstdn://user@example.com/public/local
- * - mstdn://user@example.com/public/local/media
- * - mstdn://user@example.com/public/remote
- * - mstdn://user@example.com/public/remote/media
- * - mstdn://user@example.com/hashtag/:hashtag
- * - mstdn://user@example.com/hashtag/local/:hashtag
+ * - mstdn://user@example.com/public/tag/:hashtag
+ * - mstdn://user@example.com/local
+ * - mstdn://user@example.com/local/media
+ * - mstdn://user@example.com/local/tag/:hashtag
+ * - mstdn://user@example.com/remote
+ * - mstdn://user@example.com/remote/media
  */
 export function parseUri(uri: string): Uri {
 	if (!uri.startsWith("mstdn://")) {
@@ -77,29 +77,63 @@ export function parseUri(uri: string): Uri {
 	let method: Method | undefined = undefined;
 	switch (queryString[0]) {
 		case "public":
-			if (queryString[1] === "local" || queryString[1] === "remote") {
-				method = new methods.Public({
-					only_media: queryString[2] === "media",
-					mode: queryString[1],
-				});
-			} else {
-				method = new methods.Public({
-					only_media: queryString[1] === "media",
-					mode: null,
-				});
+			switch (queryString[1]) {
+				case "tag":
+					method = new methods.HashTag({
+						local: false,
+						tag: queryString[2],
+					});
+					break;
+				case "media":
+					method = new methods.Public({
+						only_media: true,
+						mode: null,
+					});
+					break;
+				case undefined:
+					method = new methods.Public({
+						only_media: false,
+						mode: null,
+					});
+					break;
 			}
 			break;
-		case "hashtag":
-			if (queryString[1] === "local") {
-				method = new methods.HashTag({
-					local: true,
-					tag: queryString[2],
-				});
-			} else {
-				method = new methods.HashTag({
-					local: false,
-					tag: queryString[1],
-				});
+		case "local":
+			switch (queryString[1]) {
+				case "tag":
+					method = new methods.HashTag({
+						local: true,
+						tag: queryString[2],
+					});
+					break;
+				case "media":
+					method = new methods.Public({
+						only_media: true,
+						mode: "local",
+					});
+					break;
+				case undefined:
+					method = new methods.Public({
+						only_media: false,
+						mode: "local",
+					});
+					break;
+			}
+			break;
+		case "remote":
+			switch (queryString[1]) {
+				case "hashtag":
+					method = new methods.HashTag({
+						local: true,
+						tag: queryString[1],
+					});
+					break;
+				case "media":
+					method = new methods.Public({
+						only_media: queryString[1] === "media",
+						mode: "local",
+					});
+					break;
 			}
 			break;
 		case "user":
