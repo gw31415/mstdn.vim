@@ -20,7 +20,7 @@ Deno.mkdirSync(CACHE_DIR, { recursive: true });
 export const DB_URL = new URL("db.sqlite3", CACHE_DIR);
 
 /**
- * データベース
+ * データベース(書き込み可能)
  */
 const DBwritable = new sqlite.DB(fromFileUrl(DB_URL));
 DBwritable.query(

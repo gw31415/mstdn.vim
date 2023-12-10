@@ -2,7 +2,7 @@ import * as methods from "./methods.ts";
 
 import { User } from "./user.ts";
 
-import {
+import type {
 	Announcement,
 	Conversation,
 	Notification,
@@ -15,7 +15,7 @@ import camelcaseKeys from "npm:camelcase-keys";
 /**
  * 非同期取得のストリームの種類
  */
-export type Stream =
+export type StreamType =
 	| "public"
 	| "public:media"
 	| "public:local"
@@ -30,20 +30,25 @@ export type Stream =
 	| "direct";
 
 /**
- * ストリーム開通時に送信するデータ
+ * ストリームの種類
  */
-export interface Subscription<T extends Stream> {
-	type: "subscribe" | "unsubscribe";
+export interface Stream<T extends StreamType> {
 	stream: T;
 	list: T extends "list" ? string : undefined;
 	tag: T extends "hashtag" | "hashtag:local" ? string : undefined;
 }
 
 /**
- * タイムラインの種類
+ * 通信先
  */
 export interface Method {
-	get subscription(): Subscription<Stream>;
+	/**
+	 * WebSocket確立のためのStream
+	 */
+	get stream(): Stream<StreamType>;
+	/**
+	 * REST APIのエンドポイント
+	 */
 	get endpoint(): string;
 }
 
@@ -154,12 +159,18 @@ export function parseUri(uri: string): Uri {
 	throw new Error(`method "${queryString[0]}" is unimplemented`);
 }
 
+/**
+ * WebSocketから返ってくるデータ形式
+ */
 interface StreamResponse {
-	stream: Stream[];
+	stream: StreamType[];
 	event: Event;
 	payload: string;
 }
 
+/**
+ * MastodonのストリーミングAPIの定義するイベント
+ */
 type Event =
 	| "update"
 	| "delete"
@@ -171,20 +182,59 @@ type Event =
 	| "announcement.delete"
 	| "status.update";
 
+/**
+ * MstdnSocketの初期化引数
+ */
 type MstdnSocketOptions = {
+	/**
+	 * エラーが起きた時のコールバック
+	 */
 	onError?:
 		| undefined
 		| ((ev: globalThis.Event | ErrorEvent | string) => unknown);
+	/**
+	 * 接続の試行開始時のコールバック
+	 */
 	onCreatingSocket?: undefined | (() => unknown);
+	/**
+	 * 接続開始時のコールバック
+	 */
 	onOpen?: undefined | (() => unknown);
+	/**
+	 * 投稿取得時のコールバック
+	 */
 	onUpdate?: undefined | ((status: Status) => unknown);
+	/**
+	 * 投稿削除時のコールバック
+	 */
 	onDelete?: undefined | ((id: string) => unknown);
+	/**
+	 * 通知時のコールバック
+	 */
 	onNotification?: undefined | ((notification: Notification) => unknown);
+	/**
+	 * フィルター変更時のコールバック
+	 */
 	onFiltersChanged?: undefined | (() => unknown);
+	/**
+	 * DM取得時のコールバック
+	 */
 	onConversation?: undefined | ((conversation: Conversation) => unknown);
+	/**
+	 * アナウンス投稿時のコールバック
+	 */
 	onAnnouncement?: undefined | ((announcement: Announcement) => unknown);
+	/**
+	 * アナウンスにリアクションされた時のコールバック
+	 */
 	onAnnouncementReaction?: undefined | ((reaction: Reaction) => unknown);
+	/**
+	 * アナウンスが削除された時のコールバック
+	 */
 	onAnnouncementDelete?: undefined | ((id: string) => unknown);
+	/**
+	 * 投稿編集時のコールバック
+	 */
 	onStatusUpdate?: undefined | ((status: Status) => unknown);
 };
 
@@ -222,7 +272,7 @@ export class MstdnSocket {
 		this.opts = opts;
 		const wss = new URL(`wss://${this.uri.user.server}/api/v1/streaming`);
 		wss.searchParams.set("access_token", this.uri.user.token);
-		wss.searchParams.set("stream", this.uri.method.subscription.stream);
+		wss.searchParams.set("stream", this.uri.method.stream.stream);
 		const rest = new URL(
 			`https://${this.uri.user.server}/${this.uri.method.endpoint}`,
 		);
@@ -287,9 +337,7 @@ export class MstdnSocket {
 			switch (data.event) {
 				case "update": {
 					if (this.opts.onUpdate) {
-						const status: Status = camelcaseKeys(
-							JSON.parse(data.payload),
-						);
+						const status: Status = camelcaseKeys(JSON.parse(data.payload));
 						this.opts.onUpdate(status);
 					}
 					break;
@@ -335,9 +383,7 @@ export class MstdnSocket {
 				}
 				case "announcement.reaction": {
 					if (this.opts.onAnnouncementReaction) {
-						const reaction: Reaction = camelcaseKeys(
-							JSON.parse(data.payload),
-						);
+						const reaction: Reaction = camelcaseKeys(JSON.parse(data.payload));
 						this.opts.onAnnouncementReaction(reaction);
 					}
 					break;
@@ -351,9 +397,7 @@ export class MstdnSocket {
 				}
 				case "status.update": {
 					if (this.opts.onStatusUpdate) {
-						const status: Status = camelcaseKeys(
-							JSON.parse(data.payload),
-						);
+						const status: Status = camelcaseKeys(JSON.parse(data.payload));
 						this.opts.onStatusUpdate(status);
 					}
 					break;
@@ -362,10 +406,16 @@ export class MstdnSocket {
 		};
 		return socket;
 	}
+	/**
+	 * 再接続する
+	 */
 	public reconnect() {
 		this.close();
 		this.sock = this.createSocket();
 	}
+	/**
+	 * 切断する
+	 */
 	public close() {
 		this.sock.close();
 	}

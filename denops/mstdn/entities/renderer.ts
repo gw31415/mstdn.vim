@@ -6,8 +6,17 @@ import * as fn from "https://deno.land/x/denops_std@v5.1.0/function/mod.ts";
 import TurndownService from "npm:turndown";
 import { Status } from "./masto.d.ts";
 
+/**
+ * LOAD MOREもしくはStatus
+ */
 interface StatusOrLoadMore<T extends Status | null> {
+	/**
+	 * Status
+	 */
 	status: T;
+	/**
+	 * LOAD MOREのID
+	 */
 	id: T extends null ? string : null;
 }
 
@@ -70,6 +79,9 @@ export class TimelineRenderer {
 			});
 		}
 	}
+	/**
+	 * 指定したIDのLOAD MOREを削除する
+	 */
 	public async removeLoadMore(denops: Denops, id: string): Promise<boolean> {
 		const target_idx = this._statuses.findIndex((item) => item.id === id);
 		if (target_idx === -1) {
@@ -83,8 +95,17 @@ export class TimelineRenderer {
 		});
 		return true;
 	}
+	/**
+	 * 指定したIDのLOAD MOREの前後のStatusを取得する
+	 */
 	public loadMoreInfo(id: string): {
+		/**
+		 * LOAD MORE直前の投稿
+		 */
 		prev: Status | null;
+		/**
+		 * LOAD MORE直後の投稿
+		 */
 		next: Status | null;
 	} {
 		const index = this._statuses.findIndex((item) => item.id === id);
@@ -122,16 +143,16 @@ export class TimelineRenderer {
 		} else {
 			// Statusが被っていなかった場合
 			// zero-indexed
-			const lastStatusIdx = this._statuses.findLastIndex(
-				(st) =>
-					st.status !== null &&
-					datetime(item.status.createdAt).isBefore(
-						datetime(st.status.createdAt),
-					),
-			) + 1;
-			const target_idx = lastStatusIdx !== -1
-				? lastStatusIdx
-				: this._statuses.length;
+			const lastStatusIdx =
+				this._statuses.findLastIndex(
+					(st) =>
+						st.status !== null &&
+						datetime(item.status.createdAt).isBefore(
+							datetime(st.status.createdAt),
+						),
+				) + 1;
+			const target_idx =
+				lastStatusIdx !== -1 ? lastStatusIdx : this._statuses.length;
 
 			type WinSaveView = {
 				lnum: number;
@@ -209,15 +230,11 @@ function render(item: StatusOrLoadMore<Status | null>): string {
 		return datetime(time).toLocal().toISO();
 	}
 	if (item.status.editedAt) {
-		content = `${content} <!-- edited at ${
-			formatDateTime(
-				item.status.editedAt,
-			)
-		} -->`;
+		content = `${content} <!-- edited at ${formatDateTime(
+			item.status.editedAt,
+		)} -->`;
 	} else {
-		content = `${content} <!-- ${
-			formatDateTime(item.status.createdAt)
-		} -->`;
+		content = `${content} <!-- ${formatDateTime(item.status.createdAt)} -->`;
 	}
 	return `${username}: ${content}`;
 }

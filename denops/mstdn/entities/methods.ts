@@ -1,4 +1,4 @@
-import { Method, Stream, Subscription } from "./socket.ts";
+import { Method, StreamType, Stream } from "./socket.ts";
 
 export class HashTag implements Method {
 	private local: boolean;
@@ -7,10 +7,9 @@ export class HashTag implements Method {
 		this.local = args.local;
 		this.tag = args.tag;
 	}
-	get subscription(): Subscription<Stream> {
-		const stream: Stream = this.local ? "hashtag:local" : "hashtag";
+	get stream(): Stream<StreamType> {
+		const stream: StreamType = this.local ? "hashtag:local" : "hashtag";
 		return {
-			type: "subscribe",
 			stream,
 			list: undefined,
 			tag: this.tag,
@@ -41,8 +40,8 @@ export class Public implements Method {
 		}
 		this.only_media = args.only_media;
 	}
-	get subscription(): Subscription<Stream> {
-		const stream: Stream = this.local
+	get stream(): Stream<StreamType> {
+		const stream: StreamType = this.local
 			? this.only_media ? "public:local:media" : "public:local"
 			: this.remote
 			? this.only_media ? "public:remote:media" : "public:remote"
@@ -50,7 +49,6 @@ export class Public implements Method {
 			? "public:media"
 			: "public";
 		return {
-			type: "subscribe",
 			stream,
 			list: undefined,
 			tag: undefined,

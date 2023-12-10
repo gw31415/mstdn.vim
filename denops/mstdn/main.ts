@@ -94,9 +94,7 @@ export async function main(denops: Denops): Promise<void> {
 				}
 				const b = BUFFERS.get(bufnr);
 				if (!b) {
-					throw new Error(
-						`buf numbered ${bufnr} is not mstdn buffer`,
-					);
+					throw new Error(`buf numbered ${bufnr} is not mstdn buffer`);
 				}
 				b.socket.reconnect();
 			} catch (e) {
@@ -110,9 +108,7 @@ export async function main(denops: Denops): Promise<void> {
 				}
 				const b = BUFFERS.get(bufnr);
 				if (!b) {
-					throw new Error(
-						`buf numbered ${bufnr} is not mstdn buffer`,
-					);
+					throw new Error(`buf numbered ${bufnr} is not mstdn buffer`);
 				}
 				const status = b.renderer.statuses.at(index);
 				if (!status || status.id === null) {
@@ -138,16 +134,11 @@ export async function main(denops: Denops): Promise<void> {
 		},
 		async loadBuffer() {
 			try {
-				const [bufname, bufnr] = await batch.collect(
-					denops,
-					(denops) => [
-						denops.call("bufname") as Promise<string>,
-						denops.call("bufnr") as Promise<number>,
-					],
-				);
-				const renderer = await TimelineRenderer.setupCurrentBuffer(
-					denops,
-				);
+				const [bufname, bufnr] = await batch.collect(denops, (denops) => [
+					denops.call("bufname") as Promise<string>,
+					denops.call("bufnr") as Promise<number>,
+				]);
+				const renderer = await TimelineRenderer.setupCurrentBuffer(denops);
 				const socket = new MstdnSocket(bufname, {
 					onCreatingSocket() {
 						vim.msg(denops, "Connecting....", { level: "INFO" });
