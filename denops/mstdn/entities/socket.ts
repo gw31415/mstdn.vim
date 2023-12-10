@@ -241,7 +241,7 @@ type MstdnSocketOptions = {
 };
 
 export class MstdnSocket {
-	private uri: Uri;
+	private _uri: Uri;
 	private opts: MstdnSocketOptions;
 
 	private sock: WebSocket;
@@ -251,6 +251,9 @@ export class MstdnSocket {
 	};
 	get urls() {
 		return this._urls;
+	}
+	get uri() {
+		return this._uri;
 	}
 	get status(): "CONNECTING" | "OPEN" | "CLOSING" | "CLOSED" {
 		switch (this.sock.readyState) {
@@ -270,13 +273,13 @@ export class MstdnSocket {
 		opts: MstdnSocketOptions = {},
 		// protocols?: string | string[] | undefined,
 	) {
-		this.uri = isString(uri) ? parseUri(uri) : uri;
+		this._uri = isString(uri) ? parseUri(uri) : uri;
 		this.opts = opts;
-		const wss = new URL(`wss://${this.uri.user.server}/api/v1/streaming`);
-		wss.searchParams.set("access_token", this.uri.user.token);
-		wss.searchParams.set("stream", this.uri.method.stream.stream);
+		const wss = new URL(`wss://${this._uri.user.server}/api/v1/streaming`);
+		wss.searchParams.set("access_token", this._uri.user.token);
+		wss.searchParams.set("stream", this._uri.method.stream.stream);
 		const rest = new URL(
-			`https://${this.uri.user.server}/${this.uri.method.endpoint}`,
+			`https://${this._uri.user.server}/${this._uri.method.endpoint}`,
 		);
 		this._urls = {
 			wss,
@@ -299,7 +302,7 @@ export class MstdnSocket {
 		const data = await (
 			await fetch(url, {
 				headers: {
-					Authorization: `Bearer ${this.uri.user.token}`,
+					Authorization: `Bearer ${this._uri.user.token}`,
 				},
 			})
 		).text();

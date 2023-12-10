@@ -48,6 +48,7 @@ export class TimelineRenderer {
 			await denops.cmd("syntax match MstdnLoadMore /^(LOAD MORE)$/");
 			await denops.cmd("highlight link Author Comment");
 			await denops.cmd("highlight link MstdnLoadMore WildMenu");
+			await denops.cmd("sign define fav text=▸ texthl=MstdnFavourite");
 		});
 		return new TimelineRenderer(bufnr);
 	}
@@ -131,9 +132,10 @@ export class TimelineRenderer {
 			status,
 		};
 		const text = render(item);
+		let target_idx = 0;
 		if (sameStatusIdx !== -1) {
 			// Statusが被っていた場合(editedなど)
-			const target_idx = sameStatusIdx; // zero-indexed
+			target_idx = sameStatusIdx; // zero-indexed
 			await batch.batch(denops, async (denops) => {
 				await fn.setbufvar(denops, this.bufnr, "&ma", 1);
 				await fn.setbufline(denops, this.bufnr, target_idx + 1, text);
@@ -151,8 +153,7 @@ export class TimelineRenderer {
 							datetime(st.status.createdAt),
 						),
 				) + 1;
-			const target_idx =
-				lastStatusIdx !== -1 ? lastStatusIdx : this._statuses.length;
+			target_idx = lastStatusIdx !== -1 ? lastStatusIdx : this._statuses.length;
 
 			type WinSaveView = {
 				lnum: number;
@@ -188,6 +189,16 @@ export class TimelineRenderer {
 				this._statuses.splice(target_idx, 0, item);
 				await fn.setbufvar(denops, this.bufnr, "&ma", 0);
 			});
+		}
+		await denops.cmd(`
+			for sign in filter(sign_getplaced(${
+				this.bufnr
+			}, #{group: 'fav'})[0].signs, {i,v -> v.lnum == ${target_idx + 1}})
+				call sign_unplacelist('', #{buffer: ${this.bufnr}, id: sign.id})
+			endfor
+		`);
+		if (status.favourited ?? false) {
+			await denops.cmd(`call sign_place(0, '', 'fav', ${this.bufnr}, #{lnum: ${target_idx + 1}})`)
 		}
 	}
 	/**

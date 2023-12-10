@@ -14,10 +14,14 @@ function mstdn#reconnect_all() abort
 	call denops#notify("mstdn", "reconnectAll", [])
 endfunction
 
-function mstdn#load_more(lnum, bufnr = bufnr()) abort
+function mstdn#load_more(lnum = line('.'), bufnr = bufnr()) abort
 	call denops#notify("mstdn", "loadMore", [a:lnum - 1, a:bufnr])
 endfunction
 
 function mstdn#timelines() abort
 	return denops#request("mstdn", "timelines", [])
+endfunction
+
+function mstdn#status_id(lnum = line('.'), bufnr = bufnr()) abort
+	return denops#request("mstdn", "getStatusId", [a:lnum - 1, a:bufnr])
 endfunction

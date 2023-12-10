@@ -12,6 +12,8 @@ import {
 	TimelineRenderer,
 	vim,
 } from "./entities/mod.ts";
+import { Status } from "./entities/masto.d.ts";
+import camelcaseKeys from "npm:camelcase-keys";
 
 const BUFFERS = new Map<
 	number,
@@ -41,10 +43,57 @@ export async function main(denops: Denops): Promise<void> {
 				"*",
 				`call denops#notify("${denops.name}", "deleteBuffer", [str2nr(expand("<abuf>"))])`,
 			),
-			// denops.cmd("highlight MstdnUsername gui=italic guifg=#5c6370"),
+			denops.cmd("highlight MstdnFavourite ctermfg=217 gui=bold guifg=#e86671"),
 		]);
 	});
 	denops.dispatcher = {
+		async requestMstdnCommitSingleStatus(endpoint, method, body, bufnr) {
+			try {
+				if (!isString(endpoint) || !isString(method)) {
+					throw new Error("not string value");
+				}
+				if (!isNumber(bufnr)) {
+					throw new Error("not number value");
+				}
+				const b = BUFFERS.get(bufnr);
+				if (!b) {
+					throw new Error(`buf numbered ${bufnr} is not mstdn buffer`);
+				}
+				const res = await fetch(
+					new URL(`https://${b.socket.uri.user.server}/${endpoint}`),
+					{
+						method: method,
+						body: JSON.stringify(body),
+						headers: {
+							Authorization: `Bearer ${b.socket.uri.user.token}`,
+						},
+					},
+				);
+				const data = camelcaseKeys(JSON.parse(await res.text()));
+				if (res.status === 200) {
+					const newStatus: Status = data;
+					b.renderer.add(denops, newStatus);
+				} else {
+					throw new Error(`${data.error}`)
+				}
+			} catch (e) {
+				await vim.msg(denops, `${e.message ?? e}`, { level: "ERROR" });
+			}
+		},
+		getStatusId(index, bufnr): string | undefined {
+			if (!isNumber(bufnr) || !isNumber(index)) {
+				throw new Error("not number value");
+			}
+			const b = BUFFERS.get(bufnr);
+			if (!b) {
+				throw new Error(`buf numbered ${bufnr} is not mstdn buffer`);
+			}
+			const item = b.renderer.statuses.at(index);
+			if (!item || item.status === null) {
+				throw new Error("index is not valid");
+			}
+			return item.status?.id;
+		},
 		timelines(): number[] {
 			return Array.from(BUFFERS.keys());
 		},
@@ -153,7 +202,9 @@ export async function main(denops: Denops): Promise<void> {
 						await socket.fetch();
 					},
 					onError(ev) {
-						vim.msg(denops, `${ev}`, { level: "ERROR" });
+						vim.msg(denops, `${(ev as ErrorEvent).message ?? ev.toString()}`, {
+							level: "ERROR",
+						});
 					},
 					async onStatusUpdate(status) {
 						await renderer.add(denops, status);
