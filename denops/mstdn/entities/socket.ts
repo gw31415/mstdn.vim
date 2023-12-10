@@ -64,6 +64,7 @@ export interface Uri {
  * mstdn://* 形式のUri文字列をパースする
  *
  * # 有効なURLパターン
+ * - mstdn://user@example.com/home
  * - mstdn://user@example.com/public
  * - mstdn://user@example.com/public/media
  * - mstdn://user@example.com/public/tag/:hashtag
@@ -141,7 +142,8 @@ export function parseUri(uri: string): Uri {
 					break;
 			}
 			break;
-		case "user":
+		case "home":
+			method = new methods.Home();
 			break;
 		case "list":
 			break;
@@ -337,7 +339,9 @@ export class MstdnSocket {
 			switch (data.event) {
 				case "update": {
 					if (this.opts.onUpdate) {
-						const status: Status = camelcaseKeys(JSON.parse(data.payload));
+						const status: Status = camelcaseKeys(
+							JSON.parse(data.payload),
+						);
 						this.opts.onUpdate(status);
 					}
 					break;
@@ -383,7 +387,9 @@ export class MstdnSocket {
 				}
 				case "announcement.reaction": {
 					if (this.opts.onAnnouncementReaction) {
-						const reaction: Reaction = camelcaseKeys(JSON.parse(data.payload));
+						const reaction: Reaction = camelcaseKeys(
+							JSON.parse(data.payload),
+						);
 						this.opts.onAnnouncementReaction(reaction);
 					}
 					break;
@@ -397,7 +403,9 @@ export class MstdnSocket {
 				}
 				case "status.update": {
 					if (this.opts.onStatusUpdate) {
-						const status: Status = camelcaseKeys(JSON.parse(data.payload));
+						const status: Status = camelcaseKeys(
+							JSON.parse(data.payload),
+						);
 						this.opts.onStatusUpdate(status);
 					}
 					break;

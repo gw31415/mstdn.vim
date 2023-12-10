@@ -1,4 +1,4 @@
-import { Method, StreamType, Stream } from "./socket.ts";
+import { Method, Stream, StreamType } from "./socket.ts";
 
 export class HashTag implements Method {
 	private local: boolean;
@@ -17,6 +17,19 @@ export class HashTag implements Method {
 	}
 	get endpoint(): string {
 		return `/api/v1/timelines/tag/${this.tag}?local=${this.local}`;
+	}
+}
+
+export class Home implements Method {
+	get stream(): Stream<StreamType> {
+		return {
+			stream: "user",
+			list: undefined,
+			tag: undefined,
+		};
+	}
+	get endpoint(): string {
+		return "/api/v1/timelines/home";
 	}
 }
 
