@@ -14,8 +14,8 @@ function mstdn#reconnect_all() abort
 	call denops#notify("mstdn", "reconnectAll", [])
 endfunction
 
-function mstdn#fetch_more(bufnr = bufnr()) abort
-	call denops#notify("mstdn", "fetchMore", [a:bufnr])
+function mstdn#load_more(lnum, bufnr = bufnr()) abort
+	call denops#notify("mstdn", "loadMore", [a:lnum - 1, a:bufnr])
 endfunction
 
 function mstdn#timelines() abort

@@ -131,8 +131,8 @@ type MstdnSocketOptions = {
   onError?:
     | undefined
     | ((ev: globalThis.Event | ErrorEvent | string) => unknown);
+  onCreatingSocket?: undefined | (() => unknown);
   onOpen?: undefined | (() => unknown);
-  onInitialized?: undefined | (() => unknown);
   onUpdate?: undefined | ((status: Status) => unknown);
   onDelete?: undefined | ((id: string) => unknown);
   onNotification?: undefined | ((notification: Notification) => unknown);
@@ -200,36 +200,36 @@ export class MstdnSocket {
     if (opts.before) {
       url.searchParams.set("max_id", opts.before.id);
     }
-    if (this.opts.onUpdate) {
-      const data = await (
-        await fetch(url, {
-          headers: {
-            Authorization: `Bearer ${this.uri.user.token}`,
-          },
-        })
-      ).text();
-      const parsedData = JSON.parse(data);
-      if (parsedData.error) {
-        if (this.opts.onError) {
-          this.opts.onError(`${parsedData.error}`);
-        }
-        return;
+    const data = await (
+      await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${this.uri.user.token}`,
+        },
+      })
+    ).text();
+    const parsedData = JSON.parse(data);
+    if (parsedData.error) {
+      if (this.opts.onError) {
+        this.opts.onError(`${parsedData.error}`);
       }
-      const statuses: Status[] = camelcaseKeys(parsedData);
+      return [];
+    }
+    const statuses: Status[] = camelcaseKeys(parsedData);
+    if (this.opts.onUpdate) {
       for (const status of statuses) {
         await this.opts.onUpdate(status);
       }
     }
+    return statuses;
   }
   private createSocket(): WebSocket {
+    if (this.opts.onCreatingSocket) {
+      this.opts.onCreatingSocket();
+    }
     const socket = new WebSocket(this.urls.wss);
     socket.onopen = async () => {
       if (this.opts.onOpen) {
-        this.opts.onOpen();
-      }
-      await this.fetch();
-      if (this.opts.onInitialized) {
-        this.opts.onInitialized();
+        await this.opts.onOpen();
       }
     };
     socket.onerror = (ev) => {
