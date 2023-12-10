@@ -161,7 +161,7 @@ export class TimelineRenderer {
 				await fn.appendbufline(denops, this.bufnr, target_idx, text);
 				if (bufnr === this.bufnr) {
 					// 現在のバッファにいる時は閲覧画面を維持する
-					// TODO: Window-local varなど用いてWindowから離れている時もwinrestviewをする仕組み
+					// TODO: Window-local varとwin_execute()など用いてWindowから離れている時もwinrestviewをする仕組み
 					await fn.winrestview(denops, view);
 				}
 				this._statuses.splice(target_idx, 0, item);
