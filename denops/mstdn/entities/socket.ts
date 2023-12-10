@@ -57,6 +57,16 @@ export interface Uri {
 
 /**
  * mstdn://* 形式のUri文字列をパースする
+ *
+ * # 有効なURLパターン
+ * - mstdn://user@example.com/public
+ * - mstdn://user@example.com/public/media
+ * - mstdn://user@example.com/public/local
+ * - mstdn://user@example.com/public/local/media
+ * - mstdn://user@example.com/public/remote
+ * - mstdn://user@example.com/public/remote/media
+ * - mstdn://user@example.com/hashtag/:hashtag
+ * - mstdn://user@example.com/hashtag/local/:hashtag
  */
 export function parseUri(uri: string): Uri {
 	if (!uri.startsWith("mstdn://")) {
