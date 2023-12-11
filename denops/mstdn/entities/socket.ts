@@ -238,21 +238,27 @@ type MstdnSocketOptions = {
 	 * 投稿編集時のコールバック
 	 */
 	onStatusUpdate?: undefined | ((status: Status) => unknown);
+	/**
+	 * 終了時のコールバック
+	 */
+	onClose?: undefined | ((ev: CloseEvent) => unknown);
 };
 
 export class MstdnSocket {
 	private _uri: Uri;
 	private opts: MstdnSocketOptions;
 
-	private sock: WebSocket;
-	private readonly _urls: {
-		readonly wss: URL;
-		readonly rest: URL;
-	};
+	private sock: WebSocket | null;
 	get uri() {
 		return this._uri;
 	}
+	/**
+	 * 接続状態
+	 */
 	get status(): "CONNECTING" | "OPEN" | "CLOSING" | "CLOSED" {
+		if (!this.sock) {
+			return "CLOSED";
+		}
 		switch (this.sock.readyState) {
 			case WebSocket.CONNECTING:
 				return "CONNECTING";
@@ -261,6 +267,7 @@ export class MstdnSocket {
 			case WebSocket.CLOSING:
 				return "CLOSING";
 			case WebSocket.CLOSED:
+				this.sock = null;
 				return "CLOSED";
 		}
 		throw new Error("unreachable");
@@ -272,16 +279,12 @@ export class MstdnSocket {
 	) {
 		this._uri = isString(uri) ? parseUri(uri) : uri;
 		this.opts = opts;
-		const wss = new URL(`wss://${this._uri.user.server}/api/v1/streaming`);
-		wss.searchParams.set("access_token", this._uri.user.token);
-		wss.searchParams.set("stream", this._uri.method.stream.stream);
-		const rest = new URL(
-			`https://${this._uri.user.server}/${this._uri.method.endpoint}`,
-		);
-		this._urls = {
-			wss,
-			rest,
-		};
+		this.sock = null;
+	}
+	/**
+	 * 接続する
+	 */
+	public connect() {
 		this.sock = this.createSocket();
 	}
 	/**
@@ -292,7 +295,9 @@ export class MstdnSocket {
 			before?: Status | undefined;
 		} = {},
 	) {
-		const url = this._urls.rest;
+		const url = new URL(
+			`https://${this._uri.user.server}/${this._uri.method.endpoint}`,
+		);
 		if (opts.before) {
 			url.searchParams.set("max_id", opts.before.id);
 		}
@@ -322,14 +327,21 @@ export class MstdnSocket {
 		if (this.opts.onCreatingSocket) {
 			this.opts.onCreatingSocket();
 		}
-		const socket = new WebSocket(this._urls.wss);
+		const wss = new URL(`wss://${this._uri.user.server}/api/v1/streaming`);
+		wss.searchParams.set("access_token", this._uri.user.token);
+		wss.searchParams.set("stream", this._uri.method.stream.stream);
+		const socket = new WebSocket(wss);
 		socket.onopen = async () => {
 			if (this.opts.onOpen) {
 				await this.opts.onOpen();
 			}
 		};
+		socket.onclose = async (ev) => {
+			if (this.opts.onClose) {
+				await this.opts.onClose(ev);
+			}
+		};
 		socket.onerror = (ev) => {
-			this.close();
 			if (this.opts.onError) {
 				this.opts.onError(ev);
 			}
@@ -339,9 +351,7 @@ export class MstdnSocket {
 			switch (data.event) {
 				case "update": {
 					if (this.opts.onUpdate) {
-						const status: Status = camelcaseKeys(
-							JSON.parse(data.payload),
-						);
+						const status: Status = camelcaseKeys(JSON.parse(data.payload));
 						this.opts.onUpdate(status);
 					}
 					break;
@@ -387,9 +397,7 @@ export class MstdnSocket {
 				}
 				case "announcement.reaction": {
 					if (this.opts.onAnnouncementReaction) {
-						const reaction: Reaction = camelcaseKeys(
-							JSON.parse(data.payload),
-						);
+						const reaction: Reaction = camelcaseKeys(JSON.parse(data.payload));
 						this.opts.onAnnouncementReaction(reaction);
 					}
 					break;
@@ -403,9 +411,7 @@ export class MstdnSocket {
 				}
 				case "status.update": {
 					if (this.opts.onStatusUpdate) {
-						const status: Status = camelcaseKeys(
-							JSON.parse(data.payload),
-						);
+						const status: Status = camelcaseKeys(JSON.parse(data.payload));
 						this.opts.onStatusUpdate(status);
 					}
 					break;
@@ -419,12 +425,14 @@ export class MstdnSocket {
 	 */
 	public reconnect() {
 		this.close();
-		this.sock = this.createSocket();
+		this.connect();
 	}
 	/**
 	 * 切断する
 	 */
 	public close() {
-		this.sock.close();
+		if (this.sock) {
+			this.sock.close();
+		}
 	}
 }
