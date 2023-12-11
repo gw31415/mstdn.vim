@@ -60,12 +60,13 @@ export async function main(denops: Denops): Promise<void> {
 					throw new Error(`buf numbered ${bufnr} is not mstdn buffer`);
 				}
 				const res = await fetch(
-					new URL(`https://${b.socket.uri.user.server}/${endpoint}`),
+					new URL(`https://${b.socket.uri.user.server}${endpoint}`),
 					{
-						method: method,
+						method,
 						body: JSON.stringify(body),
 						headers: {
 							Authorization: `Bearer ${b.socket.uri.user.token}`,
+							"Content-type": "application/json",
 						},
 					},
 				);
