@@ -249,9 +249,6 @@ export class MstdnSocket {
 		readonly wss: URL;
 		readonly rest: URL;
 	};
-	get urls() {
-		return this._urls;
-	}
 	get uri() {
 		return this._uri;
 	}
@@ -295,7 +292,7 @@ export class MstdnSocket {
 			before?: Status | undefined;
 		} = {},
 	) {
-		const url = this.urls.rest;
+		const url = this._urls.rest;
 		if (opts.before) {
 			url.searchParams.set("max_id", opts.before.id);
 		}
@@ -325,7 +322,7 @@ export class MstdnSocket {
 		if (this.opts.onCreatingSocket) {
 			this.opts.onCreatingSocket();
 		}
-		const socket = new WebSocket(this.urls.wss);
+		const socket = new WebSocket(this._urls.wss);
 		socket.onopen = async () => {
 			if (this.opts.onOpen) {
 				await this.opts.onOpen();
