@@ -10,6 +10,10 @@ function mstdn#reconnect(bufnr = bufnr()) abort
 	call denops#notify("mstdn", "reconnectBuffer", [a:bufnr])
 endfunction
 
+function mstdn#redraw(bufnr = bufnr()) abort
+	call denops#notify("mstdn", "redrawBuffer", [a:bufnr])
+endfunction
+
 function mstdn#reconnect_all() abort
 	call denops#notify("mstdn", "reconnectAll", [])
 endfunction

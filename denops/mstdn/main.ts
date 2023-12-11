@@ -150,6 +150,20 @@ export async function main(denops: Denops): Promise<void> {
 				await vim.msg(denops, `${e.message ?? e}`, { level: "ERROR" });
 			}
 		},
+		async redrawBuffer(bufnr) {
+			try {
+				if (!isNumber(bufnr)) {
+					throw new Error("not number value");
+				}
+				const b = BUFFERS.get(bufnr);
+				if (!b) {
+					throw new Error(`buf numbered ${bufnr} is not mstdn buffer`);
+				}
+				await b.renderer.redraw(denops);
+			} catch (e) {
+				await vim.msg(denops, `${e.message ?? e}`, { level: "ERROR" });
+			}
+		},
 		async loadMore(index, bufnr) {
 			try {
 				if (!isNumber(bufnr) || !isNumber(index)) {

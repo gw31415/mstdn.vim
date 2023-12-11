@@ -6,6 +6,17 @@ import * as fn from "https://deno.land/x/denops_std@v5.1.0/function/mod.ts";
 import TurndownService from "npm:turndown";
 import { Status } from "./masto.d.ts";
 
+type WinSaveView = {
+	lnum: number;
+	col: number;
+	coladd: number;
+	curswant: number;
+	topline: number;
+	topfill: number;
+	leftcol: number;
+	skipcol: number;
+};
+
 /**
  * LOAD MOREもしくはStatus
  */
@@ -154,17 +165,6 @@ export class TimelineRenderer {
 						),
 				) + 1;
 			target_idx = lastStatusIdx !== -1 ? lastStatusIdx : this._statuses.length;
-
-			type WinSaveView = {
-				lnum: number;
-				col: number;
-				coladd: number;
-				curswant: number;
-				topline: number;
-				topfill: number;
-				leftcol: number;
-				skipcol: number;
-			};
 			const [view, bufnr] = await batch.collect(denops, (denops) => [
 				fn.winsaveview(denops) as Promise<WinSaveView>,
 				denops.eval("winbufnr(winnr())") as Promise<number>,
@@ -200,6 +200,40 @@ export class TimelineRenderer {
 		if (status.favourited ?? false) {
 			await denops.cmd(`call sign_place(0, '', 'fav', ${this.bufnr}, #{lnum: ${target_idx + 1}})`)
 		}
+	}
+
+	/**
+	 * 再描画
+	 */
+	public async redraw(denops: Denops) {
+		const favitems = this._statuses.flatMap((v, i) =>
+			v.status !== null && (v.status.favourited ?? false)
+				? [
+					{
+						buffer: this.bufnr,
+						name: "fav",
+						lnum: i + 1,
+					},
+				]
+				: []
+		);
+		await fn.setbufvar(denops, this.bufnr, "&ma", 1);
+		const lines = this._statuses.map(render);
+		const [view, bufnr] = await batch.collect(denops, (denops) => [
+			fn.winsaveview(denops) as Promise<WinSaveView>,
+			denops.eval("winbufnr(winnr())") as Promise<number>,
+		]);
+		await batch.batch(denops, async (denops) => {
+			await denops.cmd(`sil! cal deletebufline(${this.bufnr}, 1, '$')`);
+			await fn.setbufline(denops, this.bufnr, 1, lines);
+			if (bufnr === this.bufnr) {
+				// 現在のバッファにいる時は閲覧画面を維持する
+				// TODO: Window-local varとwin_execute()など用いてWindowから離れている時もwinrestviewをする仕組み
+				await fn.winrestview(denops, view);
+			}
+			await fn.setbufvar(denops, this.bufnr, "&ma", 0);
+			await denops.call("sign_placelist", favitems);
+		});
 	}
 	/**
 	 * 投稿を削除する
