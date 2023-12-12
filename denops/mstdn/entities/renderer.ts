@@ -1,8 +1,27 @@
 import * as batch from "https://deno.land/x/denops_std@v5.1.0/batch/mod.ts";
 import { Denops } from "https://deno.land/x/denops_std@v5.1.0/mod.ts";
 import * as fn from "https://deno.land/x/denops_std@v5.1.0/function/mod.ts";
-
 import TurndownService from "npm:turndown";
+// @deno-types="npm:@types/async-lock"
+import AsyncLock from "npm:async-lock";
+
+const locker = new AsyncLock({ timeout: 3000 });
+const locker_id = self.crypto.randomUUID();
+
+async function editBuffer(
+	denops: Denops,
+	bufnr: number,
+	func: (denops: Denops) => Promise<void>,
+) {
+	await locker.acquire(locker_id, async () => {
+		await batch.batch(denops, async (denops) => {
+			await fn.setbufvar(denops, bufnr, "&ma", 1);
+			await func(denops);
+			await fn.setbufvar(denops, bufnr, "&ma", 0);
+		});
+	});
+}
+
 import { Status } from "./masto.d.ts";
 
 type WinSaveView = {
@@ -75,18 +94,14 @@ export class TimelineRenderer {
 		const target_idx = 0; // zero-indexed
 		if (this._statuses.length === 0) {
 			// 最初
-			await batch.batch(denops, async (denops) => {
-				await fn.setbufvar(denops, this.bufnr, "&ma", 1);
+			await editBuffer(denops, this.bufnr, async (denops) => {
 				await fn.setbufline(denops, this.bufnr, target_idx + 1, text);
 				this._statuses = [item];
-				await fn.setbufvar(denops, this.bufnr, "&ma", 0);
 			});
 		} else if (this._statuses[0] !== null) {
-			await batch.batch(denops, async (denops) => {
-				await fn.setbufvar(denops, this.bufnr, "&ma", 1);
+			await editBuffer(denops, this.bufnr, async (denops) => {
 				await fn.appendbufline(denops, this.bufnr, target_idx, text);
 				this._statuses.splice(target_idx, 0, item);
-				await fn.setbufvar(denops, this.bufnr, "&ma", 0);
 			});
 		}
 	}
@@ -98,11 +113,9 @@ export class TimelineRenderer {
 		if (target_idx === -1) {
 			return false;
 		}
-		await batch.batch(denops, async (denops) => {
-			await fn.setbufvar(denops, this.bufnr, "&ma", 1);
+		await editBuffer(denops, this.bufnr, async (denops) => {
 			await fn.deletebufline(denops, this.bufnr, target_idx + 1);
 			this._statuses.splice(target_idx, 1);
-			await fn.setbufvar(denops, this.bufnr, "&ma", 0);
 		});
 		return true;
 	}
@@ -150,15 +163,15 @@ export class TimelineRenderer {
 				this._statuses.splice(sameStatusIdx, 1, item);
 				changeBottomIdx = Math.max(sameStatusIdx, changeBottomIdx);
 			} else {
-				const lastStatusIdx = this._statuses.findLastIndex(
-					(st) =>
-						st.status !== null &&
-						Date.parse(item.status.createdAt) <
-							Date.parse(st.status.createdAt),
-				) + 1;
-				const targetIdx = lastStatusIdx !== -1
-					? lastStatusIdx
-					: this._statuses.length;
+				const lastStatusIdx =
+					this._statuses.findLastIndex(
+						(st) =>
+							st.status !== null &&
+							Date.parse(item.status.createdAt) <
+								Date.parse(st.status.createdAt),
+					) + 1;
+				const targetIdx =
+					lastStatusIdx !== -1 ? lastStatusIdx : this._statuses.length;
 				this._statuses.splice(targetIdx, 0, item);
 				changeBottomIdx = Math.max(targetIdx, changeBottomIdx);
 			}
@@ -188,29 +201,29 @@ export class TimelineRenderer {
 		const favitems = this._statuses.flatMap((v, i) =>
 			v.status !== null && (v.status.favourited ?? false)
 				? [
-					{
-						buffer: this.bufnr,
-						name: "fav",
-						lnum: i + 1,
-					},
-				]
-				: []
+						{
+							buffer: this.bufnr,
+							name: "fav",
+							lnum: i + 1,
+						},
+				  ]
+				: [],
 		);
-		await fn.setbufvar(denops, this.bufnr, "&ma", 1);
 		const lines = this._statuses.map(render);
 		const [v, bufnr] = await batch.collect(denops, (denops) => [
 			fn.winsaveview(denops) as Promise<WinSaveView>,
 			denops.eval("winbufnr(winnr())") as Promise<number>,
 		]);
 		await batch.batch(denops, async (denops) => {
-			await denops.cmd(`sil! cal deletebufline(${this.bufnr}, 1, '$')`);
-			await fn.setbufline(denops, this.bufnr, 1, lines);
-			if (bufnr === this.bufnr) {
-				// 現在のバッファにいる時は閲覧画面を維持する
-				// TODO: Window-local varとwin_execute()など用いてWindowから離れている時もwinrestviewをする仕組み
-				await fn.winrestview(denops, view ?? v);
-			}
-			await fn.setbufvar(denops, this.bufnr, "&ma", 0);
+			await editBuffer(denops, this.bufnr, async (denops) => {
+				await denops.cmd(`sil! cal deletebufline(${this.bufnr}, 1, '$')`);
+				await fn.setbufline(denops, this.bufnr, 1, lines);
+				if (bufnr === this.bufnr) {
+					// 現在のバッファにいる時は閲覧画面を維持する
+					// TODO: Window-local varとwin_execute()など用いてWindowから離れている時もwinrestviewをする仕組み
+					await fn.winrestview(denops, view ?? v);
+				}
+			});
 			await denops.call("sign_placelist", favitems);
 		});
 	}
@@ -225,10 +238,10 @@ export class TimelineRenderer {
 			return;
 		}
 		await batch.batch(denops, async (denops) => {
-			await fn.setbufvar(denops, this.bufnr, "&ma", 1);
-			await fn.deletebufline(denops, this.bufnr, target_idx + 1);
-			this._statuses.splice(target_idx, 1);
-			await fn.setbufvar(denops, this.bufnr, "&ma", 0);
+			await editBuffer(denops, this.bufnr, async (denops) => {
+				await fn.deletebufline(denops, this.bufnr, target_idx + 1);
+				this._statuses.splice(target_idx, 1);
+			});
 		});
 	}
 }
@@ -254,15 +267,11 @@ function render(item: StatusOrLoadMore<Status | null>): string {
 		return new Date(Date.parse(time)).toLocaleString();
 	}
 	if (item.status.editedAt) {
-		content = `${content} <!-- edited at ${
-			formatDateTime(
-				item.status.editedAt,
-			)
-		} -->`;
+		content = `${content} <!-- edited at ${formatDateTime(
+			item.status.editedAt,
+		)} -->`;
 	} else {
-		content = `${content} <!-- ${
-			formatDateTime(item.status.createdAt)
-		} -->`;
+		content = `${content} <!-- ${formatDateTime(item.status.createdAt)} -->`;
 	}
 	return `${username}: ${content}`;
 }
