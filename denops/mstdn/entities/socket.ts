@@ -346,10 +346,11 @@ export class MstdnSocket {
 		};
 		socket.onmessage = (ev) => {
 			const data: StreamResponse = camelcaseKeys(JSON.parse(ev.data));
+			const parsePayload = () => camelcaseKeys(JSON.parse(data.payload));
 			switch (data.event) {
 				case "update": {
 					if (this.opts.onUpdate) {
-						const status: Status = camelcaseKeys(JSON.parse(data.payload));
+						const status: Status = parsePayload();
 						this.opts.onUpdate(status);
 					}
 					break;
@@ -363,9 +364,7 @@ export class MstdnSocket {
 				}
 				case "notification": {
 					if (this.opts.onNotification) {
-						const notification: Notification = camelcaseKeys(
-							JSON.parse(data.payload),
-						);
+						const notification: Notification = parsePayload();
 						this.opts.onNotification(notification);
 					}
 					break;
@@ -377,25 +376,21 @@ export class MstdnSocket {
 					break;
 				case "conversation": {
 					if (this.opts.onConversation) {
-						const conersation: Conversation = camelcaseKeys(
-							JSON.parse(data.payload),
-						);
+						const conersation: Conversation = parsePayload();
 						this.opts.onConversation(conersation);
 					}
 					break;
 				}
 				case "announcement": {
 					if (this.opts.onAnnouncement) {
-						const announcement: Announcement = camelcaseKeys(
-							JSON.parse(data.payload),
-						);
+						const announcement: Announcement = parsePayload();
 						this.opts.onAnnouncement(announcement);
 					}
 					break;
 				}
 				case "announcement.reaction": {
 					if (this.opts.onAnnouncementReaction) {
-						const reaction: Reaction = camelcaseKeys(JSON.parse(data.payload));
+						const reaction: Reaction = parsePayload();
 						this.opts.onAnnouncementReaction(reaction);
 					}
 					break;
@@ -409,7 +404,7 @@ export class MstdnSocket {
 				}
 				case "status.update": {
 					if (this.opts.onStatusUpdate) {
-						const status: Status = camelcaseKeys(JSON.parse(data.payload));
+						const status: Status = parsePayload();
 						this.opts.onStatusUpdate(status);
 					}
 					break;
