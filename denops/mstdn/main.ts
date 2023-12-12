@@ -227,8 +227,8 @@ export async function main(denops: Denops): Promise<void> {
 					async onDelete(id) {
 						await renderer.delete(denops, id);
 					},
-					async onUpdate(status) {
-						await renderer.add(denops, status);
+					async onUpdate(...status) {
+						await renderer.add(denops, ...status);
 					},
 				});
 				socket.connect();

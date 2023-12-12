@@ -205,7 +205,7 @@ type MstdnSocketOptions = {
 	/**
 	 * 投稿取得時のコールバック
 	 */
-	onUpdate?: undefined | ((status: Status) => unknown);
+	onUpdate?: undefined | ((...status: Status[]) => unknown);
 	/**
 	 * 投稿削除時のコールバック
 	 */
@@ -317,9 +317,7 @@ export class MstdnSocket {
 		}
 		const statuses: Status[] = camelcaseKeys(parsedData);
 		if (this.opts.onUpdate) {
-			for (const status of statuses) {
-				await this.opts.onUpdate(status);
-			}
+			await this.opts.onUpdate(...statuses);
 		}
 		return statuses;
 	}

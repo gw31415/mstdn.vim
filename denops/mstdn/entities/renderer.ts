@@ -133,73 +133,55 @@ export class TimelineRenderer {
 	/**
 	 * 適切な位置に投稿を挿入または更新する。
 	 */
-	public async add(denops: Denops, status: Status) {
-		// zero-indexed
-		const sameStatusIdx = this._statuses.findIndex(
-			(item) => item.status !== null && item.status.id === status.id,
-		);
-		const item = {
-			id: null,
-			status,
-		};
-		const text = render(item);
-		let target_idx = 0;
-		if (sameStatusIdx !== -1) {
-			// Statusが被っていた場合(editedなど)
-			target_idx = sameStatusIdx; // zero-indexed
-			await batch.batch(denops, async (denops) => {
-				await fn.setbufvar(denops, this.bufnr, "&ma", 1);
-				await fn.setbufline(denops, this.bufnr, target_idx + 1, text);
-				this._statuses.splice(target_idx, 1, item);
-				await fn.setbufvar(denops, this.bufnr, "&ma", 0);
-			});
-		} else {
-			// Statusが被っていなかった場合
+	public async add(denops: Denops, ...statuses: Status[]) {
+		/**
+		 * 変更の最下部行。自動スクロールの発火判定に用いる
+		 */
+		let changeBottomIdx = 0;
+		for (const status of statuses) {
+			const item = {
+				id: null,
+				status,
+			};
 			// zero-indexed
-			const lastStatusIdx =
-				this._statuses.findLastIndex(
-					(st) =>
-						st.status !== null &&
-						datetime(item.status.createdAt).isBefore(
-							datetime(st.status.createdAt),
-						),
-				) + 1;
-			target_idx = lastStatusIdx !== -1 ? lastStatusIdx : this._statuses.length;
-			const [view, bufnr] = await batch.collect(denops, (denops) => [
-				fn.winsaveview(denops) as Promise<WinSaveView>,
-				denops.eval("winbufnr(winnr())") as Promise<number>,
-			]);
+			const sameStatusIdx = this._statuses.findIndex(
+				(item) => item.status !== null && item.status.id === status.id,
+			);
+			if (sameStatusIdx !== -1) {
+				this._statuses.splice(sameStatusIdx, 1, item);
+				changeBottomIdx = Math.max(sameStatusIdx, changeBottomIdx);
+			} else {
+				const lastStatusIdx =
+					this._statuses.findLastIndex(
+						(st) =>
+							st.status !== null &&
+							datetime(item.status.createdAt).isBefore(
+								datetime(st.status.createdAt),
+							),
+					) + 1;
+				const targetIdx =
+					lastStatusIdx !== -1 ? lastStatusIdx : this._statuses.length;
+				this._statuses.splice(targetIdx, 0, item);
+				changeBottomIdx = Math.max(targetIdx, changeBottomIdx);
+			}
+		}
+		const [view, bufnr] = await batch.collect(denops, (denops) => [
+			fn.winsaveview(denops) as Promise<WinSaveView>,
+			denops.eval("winbufnr(winnr())") as Promise<number>,
+		]);
+		if (this.bufnr === bufnr) {
+			// 現在そのウィンドウにいるとき
 			if (
-				target_idx + 1 < view.lnum &&
-				!(target_idx === 0 && view.topline === 1)
+				changeBottomIdx + 1 < view.lnum &&
+				!(changeBottomIdx === 0 && view.topline === 1)
 			) {
 				// カーソル位置より上部のとき、ただし画面一番上にいるときは自動スクロール
 				view.lnum += 1;
 				view.topline += 1;
+				await fn.winrestview(denops, view);
 			}
-			await batch.batch(denops, async (denops) => {
-				await fn.setbufvar(denops, this.bufnr, "&ma", 1);
-				// target_idx+1 行目になるよう挿入される
-				await fn.appendbufline(denops, this.bufnr, target_idx, text);
-				if (bufnr === this.bufnr) {
-					// 現在のバッファにいる時は閲覧画面を維持する
-					// TODO: Window-local varとwin_execute()など用いてWindowから離れている時もwinrestviewをする仕組み
-					await fn.winrestview(denops, view);
-				}
-				this._statuses.splice(target_idx, 0, item);
-				await fn.setbufvar(denops, this.bufnr, "&ma", 0);
-			});
 		}
-		await denops.cmd(`
-			for sign in filter(sign_getplaced(${
-				this.bufnr
-			}, #{group: 'fav'})[0].signs, {i,v -> v.lnum == ${target_idx + 1}})
-				call sign_unplacelist('', #{buffer: ${this.bufnr}, id: sign.id})
-			endfor
-		`);
-		if (status.favourited ?? false) {
-			await denops.cmd(`call sign_place(0, '', 'fav', ${this.bufnr}, #{lnum: ${target_idx + 1}})`)
-		}
+		await this.redraw(denops);
 	}
 
 	/**
@@ -209,13 +191,13 @@ export class TimelineRenderer {
 		const favitems = this._statuses.flatMap((v, i) =>
 			v.status !== null && (v.status.favourited ?? false)
 				? [
-					{
-						buffer: this.bufnr,
-						name: "fav",
-						lnum: i + 1,
-					},
-				]
-				: []
+						{
+							buffer: this.bufnr,
+							name: "fav",
+							lnum: i + 1,
+						},
+				  ]
+				: [],
 		);
 		await fn.setbufvar(denops, this.bufnr, "&ma", 1);
 		const lines = this._statuses.map(render);
