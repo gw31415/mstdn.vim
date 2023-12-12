@@ -1,6 +1,5 @@
 import * as batch from "https://deno.land/x/denops_std@v5.1.0/batch/mod.ts";
 import { Denops } from "https://deno.land/x/denops_std@v5.1.0/mod.ts";
-import { datetime } from "https://deno.land/x/ptera@v1.0.2/mod.ts";
 import * as fn from "https://deno.land/x/denops_std@v5.1.0/function/mod.ts";
 
 import TurndownService from "npm:turndown";
@@ -151,16 +150,15 @@ export class TimelineRenderer {
 				this._statuses.splice(sameStatusIdx, 1, item);
 				changeBottomIdx = Math.max(sameStatusIdx, changeBottomIdx);
 			} else {
-				const lastStatusIdx =
-					this._statuses.findLastIndex(
-						(st) =>
-							st.status !== null &&
-							datetime(item.status.createdAt).isBefore(
-								datetime(st.status.createdAt),
-							),
-					) + 1;
-				const targetIdx =
-					lastStatusIdx !== -1 ? lastStatusIdx : this._statuses.length;
+				const lastStatusIdx = this._statuses.findLastIndex(
+					(st) =>
+						st.status !== null &&
+						Date.parse(item.status.createdAt) <
+							Date.parse(st.status.createdAt),
+				) + 1;
+				const targetIdx = lastStatusIdx !== -1
+					? lastStatusIdx
+					: this._statuses.length;
 				this._statuses.splice(targetIdx, 0, item);
 				changeBottomIdx = Math.max(targetIdx, changeBottomIdx);
 			}
@@ -178,30 +176,29 @@ export class TimelineRenderer {
 				// カーソル位置より上部のとき、ただし画面一番上にいるときは自動スクロール
 				view.lnum += 1;
 				view.topline += 1;
-				await fn.winrestview(denops, view);
 			}
 		}
-		await this.redraw(denops);
+		await this.redraw(denops, view);
 	}
 
 	/**
 	 * 再描画
 	 */
-	public async redraw(denops: Denops) {
+	public async redraw(denops: Denops, view?: WinSaveView) {
 		const favitems = this._statuses.flatMap((v, i) =>
 			v.status !== null && (v.status.favourited ?? false)
 				? [
-						{
-							buffer: this.bufnr,
-							name: "fav",
-							lnum: i + 1,
-						},
-				  ]
-				: [],
+					{
+						buffer: this.bufnr,
+						name: "fav",
+						lnum: i + 1,
+					},
+				]
+				: []
 		);
 		await fn.setbufvar(denops, this.bufnr, "&ma", 1);
 		const lines = this._statuses.map(render);
-		const [view, bufnr] = await batch.collect(denops, (denops) => [
+		const [v, bufnr] = await batch.collect(denops, (denops) => [
 			fn.winsaveview(denops) as Promise<WinSaveView>,
 			denops.eval("winbufnr(winnr())") as Promise<number>,
 		]);
@@ -211,7 +208,7 @@ export class TimelineRenderer {
 			if (bufnr === this.bufnr) {
 				// 現在のバッファにいる時は閲覧画面を維持する
 				// TODO: Window-local varとwin_execute()など用いてWindowから離れている時もwinrestviewをする仕組み
-				await fn.winrestview(denops, view);
+				await fn.winrestview(denops, view ?? v);
 			}
 			await fn.setbufvar(denops, this.bufnr, "&ma", 0);
 			await denops.call("sign_placelist", favitems);
@@ -254,14 +251,18 @@ function render(item: StatusOrLoadMore<Status | null>): string {
 		.replace(/\r?\n+/, " ")
 		.replace("\r", " ");
 	function formatDateTime(time: string) {
-		return datetime(time).toLocal().toISO();
+		return new Date(Date.parse(time)).toLocaleString();
 	}
 	if (item.status.editedAt) {
-		content = `${content} <!-- edited at ${formatDateTime(
-			item.status.editedAt,
-		)} -->`;
+		content = `${content} <!-- edited at ${
+			formatDateTime(
+				item.status.editedAt,
+			)
+		} -->`;
 	} else {
-		content = `${content} <!-- ${formatDateTime(item.status.createdAt)} -->`;
+		content = `${content} <!-- ${
+			formatDateTime(item.status.createdAt)
+		} -->`;
 	}
 	return `${username}: ${content}`;
 }
