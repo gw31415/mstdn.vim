@@ -13,7 +13,7 @@ async function editBuffer(
 	bufnr: number,
 	func: (denops: Denops) => Promise<void>,
 ) {
-	await locker.acquire(locker_id, async () => {
+	await locker.acquire(`${bufnr}:${locker_id}`, async () => {
 		await batch.batch(denops, async (denops) => {
 			await fn.setbufvar(denops, bufnr, "&ma", 1);
 			await func(denops);
