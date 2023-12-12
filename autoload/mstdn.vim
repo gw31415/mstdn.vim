@@ -6,6 +6,14 @@ function mstdn#login_users() abort
 	return denops#request("mstdn", "loginUsers", [])
 endfunction
 
+function mstdn#logout(user) abort
+	let tokens = split(a:user, "@")
+	if len(tokens) != 2
+		throw "parse error"
+	endif
+	return denops#request("mstdn", "logout", tokens)
+endfunction
+
 function mstdn#reconnect(bufnr = bufnr()) abort
 	call denops#notify("mstdn", "reconnectBuffer", [a:bufnr])
 endfunction

@@ -47,6 +47,29 @@ export async function login(opts: { server: string; token: string }) {
 }
 
 /**
+ * トークンを削除する
+ */
+
+export function logout(opts: { username: string; server: string }) {
+	if (
+		listLoginUsers().filter(
+			(u) => u.username === opts.username && u.server === opts.server,
+		).length === 0
+	) {
+		throw new Error("user not found");
+	}
+	const DB = new sqlite.DB(fromFileUrl(DB_URL));
+	DB.query(
+		"DELETE FROM users WHERE username = :username AND server = :server",
+		{
+			username: opts.username,
+			server: opts.server,
+		},
+	);
+	DB.close();
+}
+
+/**
  * 保存済みユーザ
  */
 export class User {
