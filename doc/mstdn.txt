@@ -1,0 +1,111 @@
+==============================================================================
+*mstdn.vim*                                       Mastodon client for Vim/Neovim
+
+MSTDN.VIM                                                            *mstdn-vim*
+
+This is the documentation for the |mstdn.vim|.
+
+==============================================================================
+CONTENTS                                                        *mstdn-contents*
+
+1. INTRODUCTION ................ |mstdn-introduction|
+2. FUNCTIONS ................... |mstdn-functions|
+
+==============================================================================
+INTRODUCTION                                                *mstdn-introduction*
+
+|mstdn.vim| allows users to interact with Mastodon, a social networking service,
+directly from within Vim. It provides a range of functions to post, edit, and
+manage Mastodon content.
+
+==============================================================================
+FUNCTIONS                                                      *mstdn-functions*
+
+mstdn#user#login({server}, {token})                         *mstdn#user#login()*
+
+    Log in a user to Mastodon.
+
+    {server}      Mastodon server URL.
+    {token}       The access token for the user.
+
+mstdn#user#login_users()                              *mstdn#user#login_users()*
+
+    Retrieve a list of logged-in users.
+
+mstdn#user#logout({user})                                  *mstdn#user#logout()*
+
+    Log out the specified user.
+
+    {user}        The username formatted as `[user]@[serveraddr]` to logout.
+
+mstdn#request#post({user}, {dict})                        *mstdn#request#post()*
+
+    Post a new status to Mastodon.
+
+    {user}        The username formatted as `[user]@[serveraddr]` to post the status.
+    {dict}        A dictionary containing the status details.
+
+mstdn#request#edit({dict}, {lnum}, {bufnr})               *mstdn#request#edit()*
+
+    Edit an existing status.
+
+    {dict}        Dictionary with updated status details.
+    {lnum}        Line number of the status in buffer, defaults to current line.
+    {bufnr}       Buffer number, defaults to current buffer.
+
+mstdn#timeline#user({bufnr})                             *mstdn#timeline#user()*
+
+    Display the user's timeline in a buffer.
+
+    {bufnr}       Buffer number, defaults to current buffer.
+
+mstdn#timeline#favourite({lnum}, {bufnr})           *mstdn#timeline#favourite()*
+
+    Favorite a status.
+
+    {lnum}        Line number of the status, defaults to current line.
+    {bufnr}       Buffer number, defaults to current buffer.
+
+mstdn#timeline#unfavourite({lnum}, {bufnr})       *mstdn#timeline#unfavourite()*
+
+    Unfavorite a status.
+
+    {lnum}        Line number of the status, defaults to current line.
+    {bufnr}       Buffer number, defaults to current buffer.
+
+mstdn#timeline#status_id({lnum}, {bufnr})           *mstdn#timeline#status_id()*
+
+    Retrieve the status ID of a specific line.
+
+    {lnum}        Line number of the status, defaults to current line.
+    {bufnr}       Buffer number, defaults to current buffer.
+
+mstdn#timeline#reconnect({bufnr})                   *mstdn#timeline#reconnect()*
+
+    Reconnect the timeline stream for the given buffer.
+
+    {bufnr}       Buffer number, defaults to current buffer.
+
+mstdn#timeline#redraw({bufnr})                         *mstdn#timeline#redraw()*
+
+    Redraw the timeline in the specified buffer.
+
+    {bufnr}       Buffer number, defaults to current buffer.
+
+mstdn#timeline#reconnect_all()                  *mstdn#timeline#reconnect_all()*
+
+    Reconnect all timeline streams.
+
+mstdn#timeline#load_more({lnum}, {bufnr})           *mstdn#timeline#load_more()*
+
+    Load more statuses in the timeline.
+
+    {lnum}        Line number of the status, defaults to current line.
+    {bufnr}       Buffer number, defaults to current buffer.
+
+mstdn#timeline#buffers()                              *mstdn#timeline#buffers()*
+
+    List all buffers' bufnr currently streaming timelines.
+
+==============================================================================
+vim:tw=100:ts=8:ft=help:norl:

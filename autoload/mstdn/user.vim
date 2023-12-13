@@ -1,5 +1,5 @@
-function mstdn#user#login(token, server) abort
-	call denops#notify("mstdn", "login", [a:token, a:server])
+function mstdn#user#login(server, token) abort
+	call denops#notify("mstdn", "login", [a:server, a:token])
 endfunction
 
 function mstdn#user#login_users() abort

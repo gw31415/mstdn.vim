@@ -63,7 +63,7 @@ export async function main(denops: Denops): Promise<void> {
 					const status: Status = camelcaseKeys(JSON.parse(res));
 					const renderers = Array.from(BUFFERS.values()).flatMap(
 						({ user: u, renderer }) => {
-							if (u.toString() == user) {
+							if (u.toString() === user) {
 								return [renderer];
 							} else {
 								return [];
