@@ -2,7 +2,7 @@
 
 Mastodon client for Vim/Neovim.
 
-## Installation
+## Installation & Config Example
 
 ```vim
 call dein#add("vim-denops/denops.vim") " Required
@@ -10,6 +10,15 @@ call dein#add("gw31415/mstdn.vim")
 
 " Optional: Post editor window
 call dein#add("gw31415/mstdn-editor.vim")
+
+autocmd BufReadCmd mstdn://* call s:mstdn_config()
+function s:mstdn_config() abort
+    " Key mappings
+    nnoremap <buffer> <enter> <cmd>call mstdn#timeline#load_more()<cr>
+    nnoremap <buffer> >> <cmd>call mstdn#timeline#favourite()<cr>
+    nnoremap <buffer> << <cmd>call mstdn#timeline#unfavourite()<cr>
+    nnoremap <buffer> i <Plug>(mstdn-editor-open)
+endfunction
 ```
 
 ## How to use
