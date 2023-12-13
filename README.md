@@ -2,6 +2,9 @@
 
 Mastodon client for Vim/Neovim.
 
+![output](https://github.com/gw31415/mstdn.vim/assets/24710985/fd6b1bce-a544-47a9-ae45-95fa149bff3a)
+
+
 ## Installation & Config Example
 
 - Deno and [denops](https://github.com/vim-denops/denops.vim) is required.
