@@ -145,7 +145,13 @@ export class TimelineRenderer {
 	/**
 	 * 適切な位置に投稿を挿入または更新する。
 	 */
-	public async add(denops: Denops, ...statuses: Status[]) {
+	public async add(
+		denops: Denops,
+		statuses: Status[],
+		opts: {
+			update_only?: boolean | undefined;
+		} = {},
+	) {
 		/**
 		 * 変更の最下部行。自動スクロールの発火判定に用いる
 		 */
@@ -160,9 +166,10 @@ export class TimelineRenderer {
 				(item) => item.status !== null && item.status.id === status.id,
 			);
 			if (sameStatusIdx !== -1) {
+				// 見つかったら
 				this._statuses.splice(sameStatusIdx, 1, item);
 				changeBottomIdx = Math.max(sameStatusIdx, changeBottomIdx);
-			} else {
+			} else if (!opts.update_only) {
 				const lastStatusIdx = this._statuses.findLastIndex(
 					(st) =>
 						st.status !== null &&

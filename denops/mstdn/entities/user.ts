@@ -12,6 +12,8 @@ import * as sqlite from "https://deno.land/x/sqlite@v3.8/mod.ts";
 import { Method, StreamType } from "./uri.ts";
 import camelcaseKeys from "npm:camelcase-keys";
 
+type HTTPMethod = "POST" | "GET" | "PUT";
+
 /**
  * ログイン済みユーザー一覧を得る
  */
@@ -348,7 +350,7 @@ export class User {
 		const tag = client.method.stream.tag;
 		if (tag) {
 			statuses = statuses.filter((s) =>
-				s.tags.map((t) => t.name).includes(tag),
+				s.tags.map((t) => t.name).includes(tag)
 			);
 		}
 		if (client.callbacks.onUpdate) {
@@ -357,22 +359,44 @@ export class User {
 		return statuses;
 	}
 
+	public async rest(
+		endpoint: string,
+		httpmethod: string,
+		body: unknown,
+	): Promise<string> {
+		const res = await fetch(new URL(`https://${this.server}${endpoint}`), {
+			method: httpmethod,
+			body: JSON.stringify(body),
+			headers: {
+				Authorization: `Bearer ${this.token}`,
+				"Content-type": "application/json",
+			},
+		});
+		return await res.text();
+	}
+
 	/**
 	 * 再接続する
 	 */
 	public reconnect() {
-		if (this.status !== "CLOSED") {
-			getClient(this).sock?.close();
+		const { clients, sock } = getClient(this);
+		if (this.status !== "CLOSED" && this.status !== "CLOSING") {
+			sock?.close();
 		}
 		this.connect();
+		for (const fn of clients.map((c) => c.callbacks.onOpen)) {
+			if (fn) fn();
+		}
 	}
 
 	/**
 	 * 接続する
 	 */
 	public connect() {
-		if (this.status !== "CLOSED") {
-			throw new Error("Cannot open a connection that has not been closed");
+		if (this.status !== "CLOSED" && this.status !== "CLOSING") {
+			throw new Error(
+				"Cannot open a connection that has not been closed",
+			);
 		}
 		const { clients } = getClient(this);
 		const streams = clients.map((c) => {
@@ -400,112 +424,7 @@ export class User {
 			}
 		};
 		socket.onmessage = (ev) => {
-			const data: StreamResponse = camelcaseKeys(JSON.parse(ev.data));
-			const streamtype = data.stream;
-			const parsePayload = () => camelcaseKeys(JSON.parse(data.payload));
-			switch (data.event) {
-				case "update": {
-					const status: Status = parsePayload();
-					for (const fn of clients.flatMap((c) =>
-						streamtype.includes(c.method.stream.stream) &&
-						(!c.method.stream.tag ||
-							status.tags.map((t) => t.name).includes(c.method.stream.tag))
-							? [c.callbacks.onUpdate]
-							: [],
-					)) {
-						if (fn) fn(status);
-					}
-					break;
-				}
-				case "delete": {
-					for (const fn of clients.flatMap((c) =>
-						streamtype.includes(c.method.stream.stream)
-							? [c.callbacks.onDelete]
-							: [],
-					)) {
-						const id: string = data.payload;
-						if (fn) fn(id);
-					}
-					break;
-				}
-				case "notification": {
-					for (const fn of clients.flatMap((c) =>
-						streamtype.includes(c.method.stream.stream)
-							? [c.callbacks.onNotification]
-							: [],
-					)) {
-						const notification: Notification = parsePayload();
-						if (fn) fn(notification);
-					}
-					break;
-				}
-				case "filters_changed":
-					for (const fn of clients.flatMap((c) =>
-						streamtype.includes(c.method.stream.stream)
-							? [c.callbacks.onFiltersChanged]
-							: [],
-					)) {
-						if (fn) fn();
-					}
-					break;
-				case "conversation": {
-					for (const fn of clients.flatMap((c) =>
-						streamtype.includes(c.method.stream.stream)
-							? [c.callbacks.onConversation]
-							: [],
-					)) {
-						const conersation: Conversation = parsePayload();
-						if (fn) fn(conersation);
-					}
-					break;
-				}
-				case "announcement": {
-					for (const fn of clients.flatMap((c) =>
-						streamtype.includes(c.method.stream.stream)
-							? [c.callbacks.onAnnouncement]
-							: [],
-					)) {
-						const announcement: Announcement = parsePayload();
-						if (fn) fn(announcement);
-					}
-					break;
-				}
-				case "announcement.reaction": {
-					for (const fn of clients.flatMap((c) =>
-						streamtype.includes(c.method.stream.stream)
-							? [c.callbacks.onAnnouncementReaction]
-							: [],
-					)) {
-						const reaction: Reaction = parsePayload();
-						if (fn) fn(reaction);
-					}
-					break;
-				}
-				case "announcement.delete": {
-					for (const fn of clients.flatMap((c) =>
-						streamtype.includes(c.method.stream.stream)
-							? [c.callbacks.onAnnouncementDelete]
-							: [],
-					)) {
-						const id: string = data.payload;
-						if (fn) fn(id);
-					}
-					break;
-				}
-				case "status.update": {
-					const status: Status = parsePayload();
-					for (const fn of clients.flatMap((c) =>
-						streamtype.includes(c.method.stream.stream) &&
-						(!c.method.stream.tag ||
-							status.tags.map((t) => t.name).includes(c.method.stream.tag))
-							? [c.callbacks.onStatusUpdate]
-							: [],
-					)) {
-						if (fn) fn(status);
-					}
-					break;
-				}
-			}
+			this.add(camelcaseKeys(JSON.parse(ev.data)));
 		};
 		setClient(this, {
 			clients,
@@ -517,5 +436,139 @@ export class User {
 	 */
 	public toString() {
 		return `${this.username}@${this.server}`;
+	}
+
+	/**
+	 * 手動で追加する
+	 */
+	private add(data: StreamResponse) {
+		const { clients } = getClient(this);
+		const streamtype = data.stream;
+		const parsePayload = () => camelcaseKeys(JSON.parse(data.payload));
+		switch (data.event) {
+			case "update": {
+				const status: Status = parsePayload();
+				for (
+					const fn of clients.flatMap((c) =>
+						streamtype.includes(c.method.stream.stream) &&
+							(!c.method.stream.tag ||
+								status.tags.map((t) => t.name).includes(
+									c.method.stream.tag,
+								))
+							? [c.callbacks.onUpdate]
+							: []
+					)
+				) {
+					if (fn) fn(status);
+				}
+				break;
+			}
+			case "delete": {
+				for (
+					const fn of clients.flatMap((c) =>
+						streamtype.includes(c.method.stream.stream)
+							? [c.callbacks.onDelete]
+							: []
+					)
+				) {
+					const id: string = data.payload;
+					if (fn) fn(id);
+				}
+				break;
+			}
+			case "notification": {
+				for (
+					const fn of clients.flatMap((c) =>
+						streamtype.includes(c.method.stream.stream)
+							? [c.callbacks.onNotification]
+							: []
+					)
+				) {
+					const notification: Notification = parsePayload();
+					if (fn) fn(notification);
+				}
+				break;
+			}
+			case "filters_changed":
+				for (
+					const fn of clients.flatMap((c) =>
+						streamtype.includes(c.method.stream.stream)
+							? [c.callbacks.onFiltersChanged]
+							: []
+					)
+				) {
+					if (fn) fn();
+				}
+				break;
+			case "conversation": {
+				for (
+					const fn of clients.flatMap((c) =>
+						streamtype.includes(c.method.stream.stream)
+							? [c.callbacks.onConversation]
+							: []
+					)
+				) {
+					const conersation: Conversation = parsePayload();
+					if (fn) fn(conersation);
+				}
+				break;
+			}
+			case "announcement": {
+				for (
+					const fn of clients.flatMap((c) =>
+						streamtype.includes(c.method.stream.stream)
+							? [c.callbacks.onAnnouncement]
+							: []
+					)
+				) {
+					const announcement: Announcement = parsePayload();
+					if (fn) fn(announcement);
+				}
+				break;
+			}
+			case "announcement.reaction": {
+				for (
+					const fn of clients.flatMap((c) =>
+						streamtype.includes(c.method.stream.stream)
+							? [c.callbacks.onAnnouncementReaction]
+							: []
+					)
+				) {
+					const reaction: Reaction = parsePayload();
+					if (fn) fn(reaction);
+				}
+				break;
+			}
+			case "announcement.delete": {
+				for (
+					const fn of clients.flatMap((c) =>
+						streamtype.includes(c.method.stream.stream)
+							? [c.callbacks.onAnnouncementDelete]
+							: []
+					)
+				) {
+					const id: string = data.payload;
+					if (fn) fn(id);
+				}
+				break;
+			}
+			case "status.update": {
+				const status: Status = parsePayload();
+				for (
+					const fn of clients.flatMap((c) =>
+						streamtype.includes(c.method.stream.stream) &&
+							(!c.method.stream.tag ||
+								status.tags.map((t) => t.name).includes(
+									c.method.stream.tag,
+								))
+							? [c.callbacks.onStatusUpdate]
+							: []
+					)
+				) {
+					if (fn) fn(status);
+				}
+				break;
+			}
+		}
 	}
 }

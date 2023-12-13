@@ -40,43 +40,55 @@ export async function main(denops: Denops): Promise<void> {
 				"*",
 				`call denops#notify("${denops.name}", "deleteBuffer", [str2nr(expand("<abuf>"))])`,
 			),
-			denops.cmd("highlight MstdnFavourite ctermfg=217 gui=bold guifg=#e86671"),
+			denops.cmd(
+				"highlight MstdnFavourite ctermfg=217 gui=bold guifg=#e86671",
+			),
 		]);
 	});
 	denops.dispatcher = {
-		async requestMstdnCommitSingleStatus(endpoint, method, body, bufnr) {
+		async requestMstdn(user, endpoint, method, body) {
 			try {
-				if (!isString(endpoint) || !isString(method)) {
+				if (
+					!isString(endpoint) || !isString(method) || !isString(user)
+				) {
 					throw new Error("not string value");
 				}
-				if (!isNumber(bufnr)) {
-					throw new Error("not number value");
-				}
-				const b = BUFFERS.get(bufnr);
-				if (!b) {
-					throw new Error(`buf numbered ${bufnr} is not mstdn buffer`);
-				}
-				const res = await fetch(
-					new URL(`https://${b.user.server}${endpoint}`),
-					{
-						method,
-						body: JSON.stringify(body),
-						headers: {
-							Authorization: `Bearer ${b.user.token}`,
-							"Content-type": "application/json",
+				const u = new User(user);
+				const res = await u.rest(endpoint, method, body);
+				if (
+					/^\/api\/v1\/statuses\/\d+\/(un)?favourite$/g.test(endpoint)
+				) {
+					// いいね関連リクエストのための特別処理
+					// 他のTLも更新されるようにする
+					const status: Status = camelcaseKeys(JSON.parse(res));
+					const renderers = Array.from(BUFFERS.values()).flatMap(
+						({ user: u, renderer }) => {
+							if (u.toString() == user) {
+								return [renderer];
+							} else {
+								return [];
+							}
 						},
-					},
-				);
-				const data = camelcaseKeys(JSON.parse(await res.text()));
-				if (res.status === 200) {
-					const newStatus: Status = data;
-					b.renderer.add(denops, newStatus);
-				} else {
-					throw new Error(`${data.error}`);
+					);
+					for (const renderer of renderers) {
+						renderer.add(denops, [status], {
+							update_only: true,
+						});
+					}
 				}
 			} catch (e) {
 				await vim.msg(denops, `${e.message ?? e}`, { level: "ERROR" });
 			}
+		},
+		user(bufnr): string {
+			if (!isNumber(bufnr)) {
+				throw new Error("not number value");
+			}
+			const b = BUFFERS.get(bufnr);
+			if (!b) {
+				throw new Error(`buf numbered ${bufnr} is not mstdn buffer`);
+			}
+			return b.user.toString();
 		},
 		getStatusId(index, bufnr): string | undefined {
 			if (!isNumber(bufnr) || !isNumber(index)) {
@@ -147,7 +159,9 @@ export async function main(denops: Denops): Promise<void> {
 				}
 				const b = BUFFERS.get(bufnr);
 				if (!b) {
-					throw new Error(`buf numbered ${bufnr} is not mstdn buffer`);
+					throw new Error(
+						`buf numbered ${bufnr} is not mstdn buffer`,
+					);
 				}
 				b.user.reconnect();
 			} catch (e) {
@@ -161,7 +175,9 @@ export async function main(denops: Denops): Promise<void> {
 				}
 				const b = BUFFERS.get(bufnr);
 				if (!b) {
-					throw new Error(`buf numbered ${bufnr} is not mstdn buffer`);
+					throw new Error(
+						`buf numbered ${bufnr} is not mstdn buffer`,
+					);
 				}
 				await b.renderer.redraw(denops);
 			} catch (e) {
@@ -175,7 +191,9 @@ export async function main(denops: Denops): Promise<void> {
 				}
 				const b = BUFFERS.get(bufnr);
 				if (!b) {
-					throw new Error(`buf numbered ${bufnr} is not mstdn buffer`);
+					throw new Error(
+						`buf numbered ${bufnr} is not mstdn buffer`,
+					);
 				}
 				const status = b.renderer.statuses.at(index);
 				if (!status || status.id === null) {
@@ -201,11 +219,16 @@ export async function main(denops: Denops): Promise<void> {
 		},
 		async loadBuffer() {
 			try {
-				const [bufname, bufnr] = await batch.collect(denops, (denops) => [
-					denops.call("bufname") as Promise<string>,
-					denops.call("bufnr") as Promise<number>,
-				]);
-				const renderer = await TimelineRenderer.setupCurrentBuffer(denops);
+				const [bufname, bufnr] = await batch.collect(
+					denops,
+					(denops) => [
+						denops.call("bufname") as Promise<string>,
+						denops.call("bufnr") as Promise<number>,
+					],
+				);
+				const renderer = await TimelineRenderer.setupCurrentBuffer(
+					denops,
+				);
 				const uri = parseUri(bufname);
 				uri.user.subscribe({
 					id: `${bufnr}`,
@@ -228,20 +251,22 @@ export async function main(denops: Denops): Promise<void> {
 						onError(ev) {
 							vim.msg(
 								denops,
-								`${(ev as ErrorEvent).message ?? ev.toString()}`,
+								`${
+									(ev as ErrorEvent).message ?? ev.toString()
+								}`,
 								{
 									level: "ERROR",
 								},
 							);
 						},
 						async onStatusUpdate(status) {
-							await renderer.add(denops, status);
+							await renderer.add(denops, [status]);
 						},
 						async onDelete(id) {
 							await renderer.delete(denops, id);
 						},
 						async onUpdate(...status) {
-							await renderer.add(denops, ...status);
+							await renderer.add(denops, status);
 						},
 					},
 				});
