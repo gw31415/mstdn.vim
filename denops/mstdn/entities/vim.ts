@@ -10,10 +10,15 @@ export async function msg(
 	opts: { level: "INFO" | "ERROR" },
 ) {
 	if (denops.meta.host === "nvim") {
-		await denops.call("nvim_notify", message, opts.level === "INFO" ? 2 : 4, {
-			title: "mstdn.vim", // for nvim-notify
-			annote: "mstdn.vim", // for fidget.vim
-		});
+		await denops.call(
+			"nvim_notify",
+			message,
+			opts.level === "INFO" ? 2 : 4,
+			{
+				title: "mstdn.vim", // for nvim-notify
+				annote: "mstdn.vim", // for fidget.vim
+			},
+		);
 	} else {
 		const msg = `mstdn.vim: ${message}`;
 		if (opts.level === "INFO") {

@@ -9,8 +9,9 @@ import {
 	listLoginUsers,
 	login,
 	logout,
-	MstdnSocket,
+	parseUri,
 	TimelineRenderer,
+	User,
 	vim,
 } from "./entities/mod.ts";
 import { Status } from "./entities/masto.d.ts";
@@ -19,15 +20,10 @@ import camelcaseKeys from "npm:camelcase-keys";
 const BUFFERS = new Map<
 	number,
 	{
-		socket: MstdnSocket;
+		user: User;
 		renderer: TimelineRenderer;
 	}
 >();
-Deno.addSignalListener("SIGINT", () => {
-	for (const [_, b] of BUFFERS) {
-		b.socket.close();
-	}
-});
 
 export async function main(denops: Denops): Promise<void> {
 	await batch.batch(denops, async (denops) => {
@@ -44,9 +40,7 @@ export async function main(denops: Denops): Promise<void> {
 				"*",
 				`call denops#notify("${denops.name}", "deleteBuffer", [str2nr(expand("<abuf>"))])`,
 			),
-			denops.cmd(
-				"highlight MstdnFavourite ctermfg=217 gui=bold guifg=#e86671",
-			),
+			denops.cmd("highlight MstdnFavourite ctermfg=217 gui=bold guifg=#e86671"),
 		]);
 	});
 	denops.dispatcher = {
@@ -60,17 +54,15 @@ export async function main(denops: Denops): Promise<void> {
 				}
 				const b = BUFFERS.get(bufnr);
 				if (!b) {
-					throw new Error(
-						`buf numbered ${bufnr} is not mstdn buffer`,
-					);
+					throw new Error(`buf numbered ${bufnr} is not mstdn buffer`);
 				}
 				const res = await fetch(
-					new URL(`https://${b.socket.uri.user.server}${endpoint}`),
+					new URL(`https://${b.user.server}${endpoint}`),
 					{
 						method,
 						body: JSON.stringify(body),
 						headers: {
-							Authorization: `Bearer ${b.socket.uri.user.token}`,
+							Authorization: `Bearer ${b.user.token}`,
 							"Content-type": "application/json",
 						},
 					},
@@ -133,15 +125,15 @@ export async function main(denops: Denops): Promise<void> {
 			}
 			const b = BUFFERS.get(bufnr);
 			if (b) {
-				b.socket.close();
+				b.user.close(`${bufnr}`);
 			}
 			BUFFERS.delete(bufnr);
 		},
 		reconnectAll() {
 			try {
 				for (const [_, b] of BUFFERS) {
-					if (b.socket.status === "CLOSED") {
-						b.socket.reconnect();
+					if (b.user.status === "CLOSED") {
+						b.user.reconnect();
 					}
 				}
 			} catch (e) {
@@ -155,11 +147,9 @@ export async function main(denops: Denops): Promise<void> {
 				}
 				const b = BUFFERS.get(bufnr);
 				if (!b) {
-					throw new Error(
-						`buf numbered ${bufnr} is not mstdn buffer`,
-					);
+					throw new Error(`buf numbered ${bufnr} is not mstdn buffer`);
 				}
-				b.socket.reconnect();
+				b.user.reconnect();
 			} catch (e) {
 				await vim.msg(denops, `${e.message ?? e}`, { level: "ERROR" });
 			}
@@ -171,9 +161,7 @@ export async function main(denops: Denops): Promise<void> {
 				}
 				const b = BUFFERS.get(bufnr);
 				if (!b) {
-					throw new Error(
-						`buf numbered ${bufnr} is not mstdn buffer`,
-					);
+					throw new Error(`buf numbered ${bufnr} is not mstdn buffer`);
 				}
 				await b.renderer.redraw(denops);
 			} catch (e) {
@@ -187,19 +175,17 @@ export async function main(denops: Denops): Promise<void> {
 				}
 				const b = BUFFERS.get(bufnr);
 				if (!b) {
-					throw new Error(
-						`buf numbered ${bufnr} is not mstdn buffer`,
-					);
+					throw new Error(`buf numbered ${bufnr} is not mstdn buffer`);
 				}
 				const status = b.renderer.statuses.at(index);
 				if (!status || status.id === null) {
 					throw new Error("index is not valid");
 				}
 				const info = b.renderer.loadMoreInfo(status.id);
-				if (b.socket.status === "CLOSED") {
-					b.socket.reconnect();
+				if (b.user.status === "CLOSED") {
+					b.user.reconnect();
 				}
-				const statuses = await b.socket.fetch({
+				const statuses = await b.user.fetch(`${bufnr}`, {
 					before: info.next ?? undefined,
 				});
 				if (
@@ -215,50 +201,54 @@ export async function main(denops: Denops): Promise<void> {
 		},
 		async loadBuffer() {
 			try {
-				const [bufname, bufnr] = await batch.collect(
-					denops,
-					(denops) => [
-						denops.call("bufname") as Promise<string>,
-						denops.call("bufnr") as Promise<number>,
-					],
-				);
-				const renderer = await TimelineRenderer.setupCurrentBuffer(
-					denops,
-				);
-				const socket = new MstdnSocket(bufname, {
-					onCreatingSocket() {
-						vim.msg(denops, "Connecting....", { level: "INFO" });
-					},
-					async onOpen() {
-						await batch.batch(denops, async (denops) => {
-							await vim.msg(denops, "Connected.", {
+				const [bufname, bufnr] = await batch.collect(denops, (denops) => [
+					denops.call("bufname") as Promise<string>,
+					denops.call("bufnr") as Promise<number>,
+				]);
+				const renderer = await TimelineRenderer.setupCurrentBuffer(denops);
+				const uri = parseUri(bufname);
+				uri.user.subscribe({
+					id: `${bufnr}`,
+					method: uri.method,
+					callbacks: {
+						onCreatingSocket() {
+							vim.msg(denops, "Connecting....", {
 								level: "INFO",
 							});
-							await renderer.insertLoadMore(denops);
-						});
-						await socket.fetch();
-					},
-					onError(ev) {
-						vim.msg(
-							denops,
-							`${(ev as ErrorEvent).message ?? ev.toString()}`,
-							{
-								level: "ERROR",
-							},
-						);
-					},
-					async onStatusUpdate(status) {
-						await renderer.add(denops, status);
-					},
-					async onDelete(id) {
-						await renderer.delete(denops, id);
-					},
-					async onUpdate(...status) {
-						await renderer.add(denops, ...status);
+						},
+						async onOpen() {
+							await batch.batch(denops, async (denops) => {
+								await vim.msg(denops, "Connected.", {
+									level: "INFO",
+								});
+								await renderer.insertLoadMore(denops);
+							});
+							await uri.user.fetch(`${bufnr}`);
+						},
+						onError(ev) {
+							vim.msg(
+								denops,
+								`${(ev as ErrorEvent).message ?? ev.toString()}`,
+								{
+									level: "ERROR",
+								},
+							);
+						},
+						async onStatusUpdate(status) {
+							await renderer.add(denops, status);
+						},
+						async onDelete(id) {
+							await renderer.delete(denops, id);
+						},
+						async onUpdate(...status) {
+							await renderer.add(denops, ...status);
+						},
 					},
 				});
-				socket.connect();
-				BUFFERS.set(bufnr, { socket, renderer });
+				if (uri.user.status !== "OPEN") {
+					uri.user.connect();
+				}
+				BUFFERS.set(bufnr, { user: uri.user, renderer });
 			} catch (e) {
 				await batch.batch(denops, async (denops) => {
 					await Promise.all([

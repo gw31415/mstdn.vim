@@ -163,15 +163,15 @@ export class TimelineRenderer {
 				this._statuses.splice(sameStatusIdx, 1, item);
 				changeBottomIdx = Math.max(sameStatusIdx, changeBottomIdx);
 			} else {
-				const lastStatusIdx =
-					this._statuses.findLastIndex(
-						(st) =>
-							st.status !== null &&
-							Date.parse(item.status.createdAt) <
-								Date.parse(st.status.createdAt),
-					) + 1;
-				const targetIdx =
-					lastStatusIdx !== -1 ? lastStatusIdx : this._statuses.length;
+				const lastStatusIdx = this._statuses.findLastIndex(
+					(st) =>
+						st.status !== null &&
+						Date.parse(item.status.createdAt) <
+							Date.parse(st.status.createdAt),
+				) + 1;
+				const targetIdx = lastStatusIdx !== -1
+					? lastStatusIdx
+					: this._statuses.length;
 				this._statuses.splice(targetIdx, 0, item);
 				changeBottomIdx = Math.max(targetIdx, changeBottomIdx);
 			}
@@ -201,13 +201,13 @@ export class TimelineRenderer {
 		const favitems = this._statuses.flatMap((v, i) =>
 			v.status !== null && (v.status.favourited ?? false)
 				? [
-						{
-							buffer: this.bufnr,
-							name: "fav",
-							lnum: i + 1,
-						},
-				  ]
-				: [],
+					{
+						buffer: this.bufnr,
+						name: "fav",
+						lnum: i + 1,
+					},
+				]
+				: []
 		);
 		const lines = this._statuses.map(render);
 		const [v, bufnr] = await batch.collect(denops, (denops) => [
@@ -216,7 +216,9 @@ export class TimelineRenderer {
 		]);
 		await batch.batch(denops, async (denops) => {
 			await editBuffer(denops, this.bufnr, async (denops) => {
-				await denops.cmd(`sil! cal deletebufline(${this.bufnr}, 1, '$')`);
+				await denops.cmd(
+					`sil! cal deletebufline(${this.bufnr}, 1, '$')`,
+				);
 				await fn.setbufline(denops, this.bufnr, 1, lines);
 				if (bufnr === this.bufnr) {
 					// 現在のバッファにいる時は閲覧画面を維持する
@@ -267,11 +269,15 @@ function render(item: StatusOrLoadMore<Status | null>): string {
 		return new Date(Date.parse(time)).toLocaleString();
 	}
 	if (item.status.editedAt) {
-		content = `${content} <!-- edited at ${formatDateTime(
-			item.status.editedAt,
-		)} -->`;
+		content = `${content} <!-- edited at ${
+			formatDateTime(
+				item.status.editedAt,
+			)
+		} -->`;
 	} else {
-		content = `${content} <!-- ${formatDateTime(item.status.createdAt)} -->`;
+		content = `${content} <!-- ${
+			formatDateTime(item.status.createdAt)
+		} -->`;
 	}
 	return `${username}: ${content}`;
 }

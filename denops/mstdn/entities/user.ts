@@ -1,7 +1,16 @@
-import { AccountCredentials } from "./masto.d.ts";
+import type {
+	AccountCredentials,
+	Announcement,
+	Conversation,
+	Notification,
+	Reaction,
+	Status,
+} from "./masto.d.ts";
 import { fromFileUrl } from "https://deno.land/std@0.205.0/path/mod.ts";
 import { DB, DB_URL } from "./db.ts";
 import * as sqlite from "https://deno.land/x/sqlite@v3.8/mod.ts";
+import { Method, StreamType } from "./uri.ts";
+import camelcaseKeys from "npm:camelcase-keys";
 
 /**
  * ログイン済みユーザー一覧を得る
@@ -70,6 +79,121 @@ export function logout(opts: { username: string; server: string }) {
 }
 
 /**
+ * WebSocketから返ってくるデータ形式
+ */
+interface StreamResponse {
+	stream: StreamType[];
+	event: Event;
+	payload: string;
+}
+/**
+ * MastodonのストリーミングAPIの定義するイベント
+ */
+type Event =
+	| "update"
+	| "delete"
+	| "notification"
+	| "filters_changed"
+	| "conversation"
+	| "announcement"
+	| "announcement.reaction"
+	| "announcement.delete"
+	| "status.update";
+
+type Callbacks = {
+	/**
+	 * エラーが起きた時のコールバック
+	 */
+	onError?:
+		| undefined
+		| ((ev: globalThis.Event | ErrorEvent | string) => unknown);
+	/**
+	 * 接続の試行開始時のコールバック
+	 */
+	onCreatingSocket?: undefined | (() => unknown);
+	/**
+	 * 接続開始時のコールバック
+	 */
+	onOpen?: undefined | (() => unknown);
+	/**
+	 * 投稿取得時のコールバック
+	 */
+	onUpdate?: undefined | ((...status: Status[]) => unknown);
+	/**
+	 * 投稿削除時のコールバック
+	 */
+	onDelete?: undefined | ((id: string) => unknown);
+	/**
+	 * 通知時のコールバック
+	 */
+	onNotification?: undefined | ((notification: Notification) => unknown);
+	/**
+	 * フィルター変更時のコールバック
+	 */
+	onFiltersChanged?: undefined | (() => unknown);
+	/**
+	 * DM取得時のコールバック
+	 */
+	onConversation?: undefined | ((conversation: Conversation) => unknown);
+	/**
+	 * アナウンス投稿時のコールバック
+	 */
+	onAnnouncement?: undefined | ((announcement: Announcement) => unknown);
+	/**
+	 * アナウンスにリアクションされた時のコールバック
+	 */
+	onAnnouncementReaction?: undefined | ((reaction: Reaction) => unknown);
+	/**
+	 * アナウンスが削除された時のコールバック
+	 */
+	onAnnouncementDelete?: undefined | ((id: string) => unknown);
+	/**
+	 * 投稿編集時のコールバック
+	 */
+	onStatusUpdate?: undefined | ((status: Status) => unknown);
+	/**
+	 * 終了時のコールバック
+	 */
+	onClose?: undefined | ((ev: CloseEvent) => unknown);
+};
+
+interface Client {
+	id: string;
+	method: Method;
+	callbacks: Callbacks;
+}
+
+const ActiveUserList: Map<
+	string,
+	{
+		clients: Client[];
+		sock: WebSocket | null;
+	}
+> = new Map();
+
+function getClient(user: User): {
+	clients: Client[];
+	sock: WebSocket | null;
+} {
+	return (
+		ActiveUserList.get(user.toString()) ?? {
+			clients: [],
+			sock: null,
+		}
+	);
+}
+
+function setClient(
+	user: User,
+	data: {
+		clients: Client[];
+		sock: WebSocket | null;
+	},
+) {
+	ActiveUserList.set(user.toString(), data);
+}
+
+/**
  * 保存済みユーザ
  */
 export class User {
@@ -112,6 +236,281 @@ export class User {
 		this.server = userdata.server;
 		this.username = userdata.username;
 		this.token = row.token;
+	}
+
+	/**
+	 * 接続状態を確認する
+	 */
+	public get status(): "CONNECTING" | "OPEN" | "CLOSING" | "CLOSED" {
+		const { sock } = getClient(this);
+		if (!sock) {
+			return "CLOSED";
+		}
+		switch (sock.readyState) {
+			case WebSocket.CONNECTING:
+				return "CONNECTING";
+			case WebSocket.OPEN:
+				return "OPEN";
+			case WebSocket.CLOSING:
+				return "CLOSING";
+			case WebSocket.CLOSED:
+				return "CLOSED";
+		}
+		throw new Error("unreachable");
+	}
+
+	/**
+	 * 登録する
+	 */
+	public subscribe(client: Client) {
+		const { clients, sock } = getClient(this);
+		clients.push(client);
+		setClient(this, { clients, sock });
+		if (this.status === "OPEN") {
+			client.method;
+			sock?.send(
+				JSON.stringify({
+					type: "subscribe",
+					...client.method.stream,
+				}),
+			);
+		}
+		for (const fn of clients.map((c) => c.callbacks.onOpen)) {
+			if (fn) fn();
+		}
+	}
+
+	/**
+	 * 登録を解除する
+	 */
+	public close(id: string) {
+		const users = Array.from(ActiveUserList.entries()).filter(
+			([_, { clients }]) => {
+				return clients.filter((v) => v.id === id).length > 0;
+			},
+		);
+		if (users.length > 1) {
+			throw new Error("duplicate clients");
+		} else if (users.length !== 1) {
+			throw new Error("client not found");
+		}
+		const [_, { clients, sock }] = users[0];
+		if (clients.length === 1) {
+			getClient(this).sock?.close();
+			ActiveUserList.delete(this.toString());
+		} else {
+			const client = clients.find((c) => c.id === id);
+			if (!client) {
+				throw new Error("client not found");
+			}
+			if (!client.method.stream.tag && !client.method.stream.list) {
+				sock?.send(
+					JSON.stringify({
+						type: "unsubscribe",
+						...client.method.stream,
+					}),
+				);
+			}
+		}
+	}
+
+	/**
+	 * 手動で取得する
+	 */
+	public async fetch(
+		id: string,
+		opts: { before?: Status | undefined } = {},
+	): Promise<Status[]> {
+		const { clients } = getClient(this);
+		const client = clients.find((c) => c.id === id);
+		if (!client) {
+			throw new Error("client not found");
+		}
+		const url = new URL(`https://${this.server}/${client.method.endpoint}`);
+		if (opts.before) {
+			url.searchParams.set("max_id", opts.before.id);
+		}
+		const data = await (
+			await fetch(url, {
+				headers: {
+					Authorization: `Bearer ${this.token}`,
+				},
+			})
+		).text();
+		const parsedData = JSON.parse(data);
+		if (parsedData.error) {
+			if (client.callbacks.onError) {
+				client.callbacks.onError(`${parsedData.error}`);
+			}
+			return [];
+		}
+		let statuses: Status[] = camelcaseKeys(parsedData);
+		const tag = client.method.stream.tag;
+		if (tag) {
+			statuses = statuses.filter((s) =>
+				s.tags.map((t) => t.name).includes(tag),
+			);
+		}
+		if (client.callbacks.onUpdate) {
+			await client.callbacks.onUpdate(...statuses);
+		}
+		return statuses;
+	}
+
+	/**
+	 * 再接続する
+	 */
+	public reconnect() {
+		if (this.status !== "CLOSED") {
+			getClient(this).sock?.close();
+		}
+		this.connect();
+	}
+
+	/**
+	 * 接続する
+	 */
+	public connect() {
+		if (this.status !== "CLOSED") {
+			throw new Error("Cannot open a connection that has not been closed");
+		}
+		const { clients } = getClient(this);
+		const streams = clients.map((c) => {
+			return { type: "subscribe", ...c.method.stream };
+		});
+		for (const fn of clients.map((c) => c.callbacks.onCreatingSocket)) {
+			if (fn) fn();
+		}
+		const wss = new URL(`wss://${this.server}/api/v1/streaming`);
+		wss.searchParams.set("access_token", this.token);
+		const socket = new WebSocket(wss);
+		socket.onopen = () => {
+			for (const s of streams) {
+				socket.send(JSON.stringify(s));
+			}
+		};
+		socket.onclose = async (ev) => {
+			for (const fn of clients.map((c) => c.callbacks.onClose)) {
+				if (fn) await fn(ev);
+			}
+		};
+		socket.onerror = (ev) => {
+			for (const fn of clients.map((c) => c.callbacks.onError)) {
+				if (fn) fn(ev);
+			}
+		};
+		socket.onmessage = (ev) => {
+			const data: StreamResponse = camelcaseKeys(JSON.parse(ev.data));
+			const streamtype = data.stream;
+			const parsePayload = () => camelcaseKeys(JSON.parse(data.payload));
+			switch (data.event) {
+				case "update": {
+					const status: Status = parsePayload();
+					for (const fn of clients.flatMap((c) =>
+						streamtype.includes(c.method.stream.stream) &&
+						(!c.method.stream.tag ||
+							status.tags.map((t) => t.name).includes(c.method.stream.tag))
+							? [c.callbacks.onUpdate]
+							: [],
+					)) {
+						if (fn) fn(status);
+					}
+					break;
+				}
+				case "delete": {
+					for (const fn of clients.flatMap((c) =>
+						streamtype.includes(c.method.stream.stream)
+							? [c.callbacks.onDelete]
+							: [],
+					)) {
+						const id: string = data.payload;
+						if (fn) fn(id);
+					}
+					break;
+				}
+				case "notification": {
+					for (const fn of clients.flatMap((c) =>
+						streamtype.includes(c.method.stream.stream)
+							? [c.callbacks.onNotification]
+							: [],
+					)) {
+						const notification: Notification = parsePayload();
+						if (fn) fn(notification);
+					}
+					break;
+				}
+				case "filters_changed":
+					for (const fn of clients.flatMap((c) =>
+						streamtype.includes(c.method.stream.stream)
+							? [c.callbacks.onFiltersChanged]
+							: [],
+					)) {
+						if (fn) fn();
+					}
+					break;
+				case "conversation": {
+					for (const fn of clients.flatMap((c) =>
+						streamtype.includes(c.method.stream.stream)
+							? [c.callbacks.onConversation]
+							: [],
+					)) {
+						const conersation: Conversation = parsePayload();
+						if (fn) fn(conersation);
+					}
+					break;
+				}
+				case "announcement": {
+					for (const fn of clients.flatMap((c) =>
+						streamtype.includes(c.method.stream.stream)
+							? [c.callbacks.onAnnouncement]
+							: [],
+					)) {
+						const announcement: Announcement = parsePayload();
+						if (fn) fn(announcement);
+					}
+					break;
+				}
+				case "announcement.reaction": {
+					for (const fn of clients.flatMap((c) =>
+						streamtype.includes(c.method.stream.stream)
+							? [c.callbacks.onAnnouncementReaction]
+							: [],
+					)) {
+						const reaction: Reaction = parsePayload();
+						if (fn) fn(reaction);
+					}
+					break;
+				}
+				case "announcement.delete": {
+					for (const fn of clients.flatMap((c) =>
+						streamtype.includes(c.method.stream.stream)
+							? [c.callbacks.onAnnouncementDelete]
+							: [],
+					)) {
+						const id: string = data.payload;
+						if (fn) fn(id);
+					}
+					break;
+				}
+				case "status.update": {
+					const status: Status = parsePayload();
+					for (const fn of clients.flatMap((c) =>
+						streamtype.includes(c.method.stream.stream) &&
+						(!c.method.stream.tag ||
+							status.tags.map((t) => t.name).includes(c.method.stream.tag))
+							? [c.callbacks.onStatusUpdate]
+							: [],
+					)) {
+						if (fn) fn(status);
+					}
+					break;
+				}
+			}
+		};
+		setClient(this, {
+			clients,
+			sock: socket,
+		});
 	}
 	/**
 	 * 文字列に変換
