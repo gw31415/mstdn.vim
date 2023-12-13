@@ -4,6 +4,8 @@ Mastodon client for Vim/Neovim.
 
 ## Installation & Config Example
 
+- Deno and [denops](https://github.com/vim-denops/denops.vim) is required.
+
 ```vim
 call dein#add("vim-denops/denops.vim") " Required
 call dein#add("gw31415/mstdn.vim")
