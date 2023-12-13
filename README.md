@@ -19,6 +19,8 @@ function s:mstdn_config() abort
     nnoremap <buffer> <enter> <cmd>call mstdn#timeline#load_more()<cr>
     nnoremap <buffer> >> <cmd>call mstdn#timeline#favourite()<cr>
     nnoremap <buffer> << <cmd>call mstdn#timeline#unfavourite()<cr>
+
+    " Configuration for mstdn-editor.vim
     nnoremap <buffer> i <Plug>(mstdn-editor-open)
 endfunction
 ```
