@@ -12,8 +12,6 @@ import * as sqlite from "https://deno.land/x/sqlite@v3.8/mod.ts";
 import { Method, StreamType } from "./uri.ts";
 import camelcaseKeys from "npm:camelcase-keys";
 
-type HTTPMethod = "POST" | "GET" | "PUT";
-
 /**
  * ログイン済みユーザー一覧を得る
  */
