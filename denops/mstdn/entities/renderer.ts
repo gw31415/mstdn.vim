@@ -269,9 +269,9 @@ function render(item: StatusOrLoadMore<Status | null>): string {
 			: item.status.account.username
 	}`;
 	let content = turndownService
-		.turndown(item.status.content)
-		.replace(/\r?\n+/, " ")
-		.replace("\r", " ");
+		.turndown(item.status.content);
+		// .replace(/\r?\n+/g, " ")
+		// .replace("\r", " ");
 	function formatDateTime(time: string) {
 		return new Date(Date.parse(time)).toLocaleString();
 	}
