@@ -18,14 +18,20 @@ call dein#add("gw31415/mstdn-editor.vim")
 
 autocmd BufReadCmd mstdn://* call s:mstdn_config()
 function s:mstdn_config() abort
+	" Some preferences
+	setl nonu so=0 scl=yes
+
     " Key mappings
-    nnoremap <buffer> <enter> <cmd>call mstdn#timeline#load_more()<cr>
-    nnoremap <buffer> >> <cmd>call mstdn#timeline#favourite()<cr>
-    nnoremap <buffer> << <cmd>call mstdn#timeline#unfavourite()<cr>
+    nn <buffer> <enter> <cmd>call mstdn#timeline#load_more()<cr>
+    nn <buffer> <expr> G getcurpos()[1] == line('$') ? "\<cmd>call mstdn#timeline#load_more()\<cr>" : "\<cmd>norm! G\<cr>"
+    nn <buffer><nowait> > <cmd>call mstdn#timeline#favourite()<cr>
+    nn <buffer><nowait> < <cmd>call mstdn#timeline#unfavourite()<cr>
 
     " Configuration for mstdn-editor.vim
-    nnoremap <buffer> i <Plug>(mstdn-editor-open)
+    nn <buffer> i <Plug>(mstdn-editor-open)
 endfunction
+" auto reconnect
+autocmd BufReadCmd mstdn://* call timer_start(1500, {-> mstdn#timeline#reconnect_all()}, #{repeat: -1})
 ```
 
 ## How to use
