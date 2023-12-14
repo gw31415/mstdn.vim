@@ -14,7 +14,7 @@ import {
 	User,
 	vim,
 } from "./entities/mod.ts";
-import { Status } from "./entities/masto.d.ts";
+import { CreateStatusParams, Status } from "./entities/masto.d.ts";
 import camelcaseKeys from "npm:camelcase-keys";
 
 const BUFFERS = new Map<
@@ -106,6 +106,16 @@ export async function main(denops: Denops): Promise<void> {
 		},
 		timelines(): number[] {
 			return Array.from(BUFFERS.keys());
+		},
+		getStatusDefaults(bufnr): CreateStatusParams {
+			if (!isNumber(bufnr)) {
+				throw new Error("not number value");
+			}
+			const buffer = BUFFERS.get(bufnr)
+			if (buffer) {
+				return buffer.user.timelineStatusDefaults(`${bufnr}`)
+			}
+			return {status: ""}
 		},
 		loginUsers(): string[] {
 			return listLoginUsers().map(

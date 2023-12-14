@@ -2,6 +2,7 @@ import type {
 	AccountCredentials,
 	Announcement,
 	Conversation,
+	CreateStatusParams,
 	Notification,
 	Reaction,
 	Status,
@@ -312,6 +313,21 @@ export class User {
 				);
 			}
 		}
+	}
+
+	/**
+	 * 指定したIDのタイムラインにおける投稿のデフォルト値を返す
+	 */
+	public timelineStatusDefaults(id: string): CreateStatusParams {
+		const { clients } = getClient(this);
+		const client = clients.find((c) => c.id === id);
+		if (!client) {
+			throw new Error("client not found");
+		}
+		if (client.method.stream.tag) {
+			return { status: ` #${client.method.stream.tag}` };
+		}
+		return { status: "" };
 	}
 
 	/**

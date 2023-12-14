@@ -39,3 +39,7 @@ endfunction
 function mstdn#timeline#buffers() abort
 	return denops#request("mstdn", "timelines", [])
 endfunction
+
+function mstdn#timeline#status_defaults(bufnr = bufnr()) abort
+	return denops#request("mstdn", "getStatusDefaults", [a:bufnr])
+endfunction
