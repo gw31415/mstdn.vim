@@ -18,8 +18,8 @@ call dein#add("gw31415/mstdn-editor.vim")
 
 autocmd BufReadCmd mstdn://* call s:mstdn_config()
 function s:mstdn_config() abort
-	" Some preferences
-	setl nonu so=0 scl=yes
+    " Some preferences
+    setl nonu so=0 scl=yes
 
     " Key mappings
     nn <buffer> <enter> <cmd>call mstdn#timeline#load_more()<cr>
