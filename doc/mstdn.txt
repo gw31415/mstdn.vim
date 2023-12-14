@@ -107,5 +107,12 @@ mstdn#timeline#buffers()                              *mstdn#timeline#buffers()*
 
     List all buffers' bufnr currently streaming timelines.
 
+mstdn#timeline#status_defaults({bufnr})       *mstdn#timeline#status_defaults()*
+
+    Generate the default value of CreateStatusParams according to the
+    timeline.
+
+    {bufnr}       Buffer number, defaults to current buffer.
+
 ==============================================================================
 vim:tw=100:ts=8:ft=help:norl:
