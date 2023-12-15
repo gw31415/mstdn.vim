@@ -88,7 +88,7 @@ export class TimelineRenderer {
 	/**
 	 * 「さらに読み込む」マークを先頭に挿入する
 	 */
-	public async insertLoadMore(denops: Denops) {
+	public async addLoadMore(denops: Denops) {
 		const lastStatus = this._statuses.at(0);
 		if (lastStatus?.type === "LoadMore") return;
 		const createdAt = (

@@ -254,7 +254,7 @@ export async function main(denops: Denops): Promise<void> {
 								await vim.msg(denops, "Connected.", {
 									level: "INFO",
 								});
-								await renderer.insertLoadMore(denops);
+								await renderer.addLoadMore(denops);
 							});
 							await uri.user.fetch(`${bufnr}`);
 						},
