@@ -295,12 +295,13 @@ export class User {
 		} else if (users.length !== 1) {
 			throw new Error("client not found");
 		}
-		const [_, { clients, sock }] = users[0];
+		const [server, { clients, sock }] = users[0];
 		if (clients.length === 1) {
 			getClient(this).sock?.close();
-			ActiveUserList.delete(this.toString());
+			ActiveUserList.delete(server);
 		} else {
-			const client = clients.find((c) => c.id === id);
+			const clientIndex = clients.findIndex((c) => c.id === id);
+			const client = clients[clientIndex];
 			if (!client) {
 				throw new Error("client not found");
 			}
@@ -312,6 +313,8 @@ export class User {
 					}),
 				);
 			}
+			clients.splice(clientIndex, 1);
+			ActiveUserList.set(server, { clients, sock });
 		}
 	}
 
