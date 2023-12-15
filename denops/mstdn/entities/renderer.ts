@@ -91,8 +91,7 @@ export class TimelineRenderer {
 	public async insertLoadMore(denops: Denops) {
 		const lastStatus = this._statuses.at(0);
 		if (lastStatus?.type === "LoadMore") return;
-		const createdAt = lastStatus?.data.createdAt ??
-			new Date(0).toISOString();
+		const createdAt = lastStatus?.data.createdAt ?? new Date(0).toISOString();
 		const item: StatusOrLoadMore = {
 			type: "LoadMore",
 			data: {
@@ -158,32 +157,41 @@ export class TimelineRenderer {
 		 * 変更の最下部行。自動スクロールの発火判定に用いる
 		 */
 		let changeBottomIdx = 0;
-		for (const status of statuses) {
-			const item: StatusOrLoadMore<"Status"> = {
-				data: status,
-				type: "Status",
-			};
-			// zero-indexed
-			const sameStatusIdx = this._statuses.findIndex(
-				(item) => item.data.id === status.id,
-			);
-			if (sameStatusIdx !== -1) {
-				// 見つかったら
-				this._statuses.splice(sameStatusIdx, 1, item);
-				changeBottomIdx = Math.max(sameStatusIdx, changeBottomIdx);
-			} else if (!opts.update_only) {
-				const lastStatusIdx = this._statuses.findLastIndex(
-					(st) =>
-						Date.parse(item.data.createdAt) <
-							Date.parse(st.data.createdAt),
-				) + 1;
-				const targetIdx = lastStatusIdx !== -1
-					? lastStatusIdx
-					: this._statuses.length;
-				this._statuses.splice(targetIdx, 0, item);
-				changeBottomIdx = Math.max(targetIdx, changeBottomIdx);
-			}
+		function sorter(l: StatusOrLoadMore, r: StatusOrLoadMore) {
+			return Date.parse(r.data.createdAt) - Date.parse(l.data.createdAt);
 		}
+		/**
+		 * 配列済み配列をマージする
+		 */
+		function merge(update: StatusOrLoadMore[], old: StatusOrLoadMore[]) {
+			const results = [];
+			while (update.length && old.length) {
+				const diff = sorter(update[0], old[0]);
+
+				if (diff <= 0) {
+					if (opts.update_only && update[0].data.id === old[0].data.id) {
+						old.shift();
+					}
+					results.push(update.shift() as StatusOrLoadMore);
+				} else {
+					results.push(old.shift() as StatusOrLoadMore);
+				}
+			}
+			changeBottomIdx = results.length + update.length - 1;
+			return [...results, ...update, ...old];
+		}
+		this._statuses = merge(
+			statuses
+				.map((data) => {
+					const sol: StatusOrLoadMore<"Status"> = {
+						data,
+						type: "Status",
+					};
+					return sol;
+				})
+				.sort(sorter),
+			this._statuses,
+		);
 		const [view, bufnr] = await batch.collect(denops, (denops) => [
 			fn.winsaveview(denops) as Promise<WinSaveView>,
 			denops.eval("winbufnr(winnr())") as Promise<number>,
@@ -209,13 +217,13 @@ export class TimelineRenderer {
 		const favitems = this._statuses.flatMap((v, i) =>
 			v.type === "Status" && ((v.data as Status).favourited ?? false)
 				? [
-					{
-						buffer: this.bufnr,
-						name: "fav",
-						lnum: i + 1,
-					},
-				]
-				: []
+						{
+							buffer: this.bufnr,
+							name: "fav",
+							lnum: i + 1,
+						},
+				  ]
+				: [],
 		);
 		const lines = this._statuses.map(render);
 		const [v, bufnr] = await batch.collect(denops, (denops) => [
@@ -224,9 +232,7 @@ export class TimelineRenderer {
 		]);
 		await batch.batch(denops, async (denops) => {
 			await editBuffer(denops, this.bufnr, async (denops) => {
-				await denops.cmd(
-					`sil! cal deletebufline(${this.bufnr}, 1, '$')`,
-				);
+				await denops.cmd(`sil! cal deletebufline(${this.bufnr}, 1, '$')`);
 				await fn.setbufline(denops, this.bufnr, 1, lines);
 				if (bufnr === this.bufnr) {
 					// 現在のバッファにいる時は閲覧画面を維持する
@@ -274,9 +280,7 @@ function render(item: StatusOrLoadMore<"Status" | "LoadMore">): string {
 		return new Date(Date.parse(time)).toLocaleString();
 	}
 	if (data.editedAt) {
-		content = `${content} <!-- edited at ${
-			formatDateTime(data.editedAt)
-		} -->`;
+		content = `${content} <!-- edited at ${formatDateTime(data.editedAt)} -->`;
 	} else {
 		content = `${content} <!-- ${formatDateTime(data.createdAt)} -->`;
 	}
