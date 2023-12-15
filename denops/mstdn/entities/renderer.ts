@@ -35,25 +35,29 @@ type WinSaveView = {
 	skipcol: number;
 };
 
+interface LoadMore {
+	createdAt: string;
+	id: string;
+}
+
 /**
  * LOAD MOREもしくはStatus
  */
-interface StatusOrLoadMore<T extends Status | null> {
+interface StatusOrLoadMore<
+	T extends "Status" | "LoadMore" = "Status" | "LoadMore",
+> {
 	/**
-	 * Status
+	 * Status か LoadMoreの実体
 	 */
-	status: T;
-	/**
-	 * LOAD MOREのID
-	 */
-	id: T extends null ? string : null;
+	type: T;
+	data: T extends "Status" ? Status : LoadMore;
 }
 
 /**
  * タイムラインのレンダーを引き受ける構造体
  */
 export class TimelineRenderer {
-	private _statuses: StatusOrLoadMore<Status | null>[] = [];
+	private _statuses: StatusOrLoadMore[] = [];
 	private bufnr: number;
 	private constructor(bufnr: number) {
 		this.bufnr = bufnr;
@@ -85,11 +89,17 @@ export class TimelineRenderer {
 	 * 「さらに読み込む」マークを先頭に挿入する
 	 */
 	public async insertLoadMore(denops: Denops) {
-		const item: StatusOrLoadMore<null> = {
-			status: null,
-			id: self.crypto.randomUUID(),
+		const lastStatus = this._statuses.at(0);
+		if (lastStatus?.type === "LoadMore") return;
+		const createdAt = lastStatus?.data.createdAt ??
+			new Date(0).toISOString();
+		const item: StatusOrLoadMore = {
+			type: "LoadMore",
+			data: {
+				createdAt,
+				id: self.crypto.randomUUID(),
+			},
 		};
-		self.crypto.randomUUID();
 		const text = render(item);
 		const target_idx = 0; // zero-indexed
 		if (this._statuses.length === 0) {
@@ -106,20 +116,6 @@ export class TimelineRenderer {
 		}
 	}
 	/**
-	 * 指定したIDのLOAD MOREを削除する
-	 */
-	public async removeLoadMore(denops: Denops, id: string): Promise<boolean> {
-		const target_idx = this._statuses.findIndex((item) => item.id === id);
-		if (target_idx === -1) {
-			return false;
-		}
-		await editBuffer(denops, this.bufnr, async (denops) => {
-			await fn.deletebufline(denops, this.bufnr, target_idx + 1);
-			this._statuses.splice(target_idx, 1);
-		});
-		return true;
-	}
-	/**
 	 * 指定したIDのLOAD MOREの前後のStatusを取得する
 	 */
 	public loadMoreInfo(id: string): {
@@ -132,14 +128,20 @@ export class TimelineRenderer {
 		 */
 		next: Status | null;
 	} {
-		const index = this._statuses.findIndex((item) => item.id === id);
+		const index = this._statuses.findIndex(
+			(item) => item.type === "LoadMore" && item.data.id === id,
+		);
 		if (index === -1) {
 			throw new Error("loadMore not found");
 		}
-		const n = this._statuses.at(index - 1) ?? null;
-		const next = n === null ? null : n.status;
-		const p = this._statuses.at(index + 1) ?? null;
-		const prev = p === null ? null : p.status;
+		const n = (
+			index !== 0 ? this._statuses[index - 1] : null
+		) as StatusOrLoadMore<"Status"> | null;
+		const next = n === null ? null : n.data;
+		const p = (
+			index + 1 < this._statuses.length ? this._statuses[index + 1] : null
+		) as StatusOrLoadMore<"Status"> | null;
+		const prev = p === null ? null : p.data;
 		return { next, prev };
 	}
 	/**
@@ -157,13 +159,13 @@ export class TimelineRenderer {
 		 */
 		let changeBottomIdx = 0;
 		for (const status of statuses) {
-			const item = {
-				id: null,
-				status,
+			const item: StatusOrLoadMore<"Status"> = {
+				data: status,
+				type: "Status",
 			};
 			// zero-indexed
 			const sameStatusIdx = this._statuses.findIndex(
-				(item) => item.status !== null && item.status.id === status.id,
+				(item) => item.data.id === status.id,
 			);
 			if (sameStatusIdx !== -1) {
 				// 見つかったら
@@ -172,9 +174,8 @@ export class TimelineRenderer {
 			} else if (!opts.update_only) {
 				const lastStatusIdx = this._statuses.findLastIndex(
 					(st) =>
-						st.status !== null &&
-						Date.parse(item.status.createdAt) <
-							Date.parse(st.status.createdAt),
+						Date.parse(item.data.createdAt) <
+							Date.parse(st.data.createdAt),
 				) + 1;
 				const targetIdx = lastStatusIdx !== -1
 					? lastStatusIdx
@@ -206,7 +207,7 @@ export class TimelineRenderer {
 	 */
 	public async redraw(denops: Denops, view?: WinSaveView) {
 		const favitems = this._statuses.flatMap((v, i) =>
-			v.status !== null && (v.status.favourited ?? false)
+			v.type === "Status" && ((v.data as Status).favourited ?? false)
 				? [
 					{
 						buffer: this.bufnr,
@@ -237,54 +238,47 @@ export class TimelineRenderer {
 		});
 	}
 	/**
-	 * 投稿を削除する
+	 * 投稿やLOAD MOREを削除する
 	 */
-	public async delete(denops: Denops, id: string) {
-		const target_idx = this._statuses.findIndex(
-			(st) => st !== null && st.id === id,
-		);
-		if (target_idx === -1) {
-			return;
-		}
+	public async delete(denops: Denops, id: string): Promise<boolean> {
+		const target_idx = this._statuses.findIndex((st) => st.data.id === id);
+		if (target_idx === -1) return false;
 		await batch.batch(denops, async (denops) => {
 			await editBuffer(denops, this.bufnr, async (denops) => {
 				await fn.deletebufline(denops, this.bufnr, target_idx + 1);
 				this._statuses.splice(target_idx, 1);
 			});
 		});
+		return true;
 	}
 }
 
 const turndownService = new TurndownService();
-function render(item: StatusOrLoadMore<Status | null>): string {
-	if (item.status === null) {
+function render(item: StatusOrLoadMore<"Status" | "LoadMore">): string {
+	if (item.type === "LoadMore") {
 		// 接続が切れていた行
 		return "(LOAD MORE)";
 	}
+	const data = item.data as Status;
 	const ACCOUNT_LENGTH = 10;
-	const spaces = ACCOUNT_LENGTH - item.status.account.username.length;
+	const spaces = ACCOUNT_LENGTH - data.account.username.length;
 	const username = `${"-".repeat(Math.max(spaces, 0))}@${
 		spaces < 0
-			? `${item.status.account.username.slice(0, ACCOUNT_LENGTH - 1)}…`
-			: item.status.account.username
+			? `${data.account.username.slice(0, ACCOUNT_LENGTH - 1)}…`
+			: data.account.username
 	}`;
-	let content = turndownService
-		.turndown(item.status.content);
-		// .replace(/\r?\n+/g, " ")
-		// .replace("\r", " ");
+	let content = turndownService.turndown(data.content);
+	// .replace(/\r?\n+/g, " ")
+	// .replace("\r", " ");
 	function formatDateTime(time: string) {
 		return new Date(Date.parse(time)).toLocaleString();
 	}
-	if (item.status.editedAt) {
+	if (data.editedAt) {
 		content = `${content} <!-- edited at ${
-			formatDateTime(
-				item.status.editedAt,
-			)
+			formatDateTime(data.editedAt)
 		} -->`;
 	} else {
-		content = `${content} <!-- ${
-			formatDateTime(item.status.createdAt)
-		} -->`;
+		content = `${content} <!-- ${formatDateTime(data.createdAt)} -->`;
 	}
 	return `${username}: ${content}`;
 }

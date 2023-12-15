@@ -99,10 +99,10 @@ export async function main(denops: Denops): Promise<void> {
 				throw new Error(`buf numbered ${bufnr} is not mstdn buffer`);
 			}
 			const item = b.renderer.statuses.at(index);
-			if (!item || item.status === null) {
+			if (!item || item.data === null) {
 				throw new Error("index is not valid");
 			}
-			return item.status?.id;
+			return item.data?.id;
 		},
 		timelines(): number[] {
 			return Array.from(BUFFERS.keys());
@@ -206,10 +206,10 @@ export async function main(denops: Denops): Promise<void> {
 					);
 				}
 				const status = b.renderer.statuses.at(index);
-				if (!status || status.id === null) {
+				if (!status || status.type !== "LoadMore") {
 					throw new Error("index is not valid");
 				}
-				const info = b.renderer.loadMoreInfo(status.id);
+				const info = b.renderer.loadMoreInfo(status.data.id);
 				if (b.user.status === "CLOSED") {
 					b.user.reconnect();
 				}
@@ -221,7 +221,7 @@ export async function main(denops: Denops): Promise<void> {
 					-1 !== statuses.findIndex((st) => st.id === info.prev?.id)
 				) {
 					// 取得がloadMoreを追い越した時
-					await b.renderer.removeLoadMore(denops, status.id);
+					await b.renderer.delete(denops, status.data.id);
 				}
 			} catch (e) {
 				await vim.msg(denops, `${e.message ?? e}`, { level: "ERROR" });
