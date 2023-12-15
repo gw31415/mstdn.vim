@@ -91,11 +91,10 @@ export class TimelineRenderer {
 	public async addLoadMore(denops: Denops) {
 		const lastStatus = this._statuses.at(0);
 		if (lastStatus?.type === "LoadMore") return;
-		const createdAt = (
+		const createdAt =
 			lastStatus !== undefined
-				? new Date(Date.parse(lastStatus.data.createdAt) + 1)
-				: new Date(0)
-		).toISOString();
+				? lastStatus.data.createdAt
+				: new Date(0).toISOString();
 		const item: StatusOrLoadMore = {
 			type: "LoadMore",
 			data: {
@@ -162,7 +161,10 @@ export class TimelineRenderer {
 		 */
 		let changeBottomIdx = 0;
 		function sorter(l: StatusOrLoadMore, r: StatusOrLoadMore) {
-			return Date.parse(r.data.createdAt) - Date.parse(l.data.createdAt);
+			const diff = Date.parse(r.data.createdAt) - Date.parse(l.data.createdAt);
+			if (diff !== 0) return diff;
+			if (r.type === "LoadMore") return 1;
+			return r.data.id.localeCompare(l.data.id);
 		}
 		/**
 		 * 配列済み配列をマージする
