@@ -159,7 +159,7 @@ type Callbacks = {
 };
 
 interface Client {
-	id: string;
+	id: number;
 	method: Method;
 	callbacks: Callbacks;
 }
@@ -284,7 +284,7 @@ export class User {
 	/**
 	 * 登録を解除する
 	 */
-	public close(id: string) {
+	public close(id: number) {
 		const users = Array.from(ActiveUserList.entries()).filter(
 			([_, { clients }]) => {
 				return clients.filter((v) => v.id === id).length > 0;
@@ -321,7 +321,7 @@ export class User {
 	/**
 	 * 指定したIDのタイムラインにおける投稿のデフォルト値を返す
 	 */
-	public timelineStatusDefaults(id: string): CreateStatusParams {
+	public timelineStatusDefaults(id: number): CreateStatusParams {
 		const { clients } = getClient(this);
 		const client = clients.find((c) => c.id === id);
 		if (!client) {
@@ -337,7 +337,7 @@ export class User {
 	 * 手動で取得する
 	 */
 	public async fetch(
-		id: string,
+		id: number,
 		opts: { before?: Status | undefined } = {},
 	): Promise<Status[]> {
 		const { clients } = getClient(this);
