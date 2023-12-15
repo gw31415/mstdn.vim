@@ -3,6 +3,7 @@
   "packages": {
     "specifiers": {
       "npm:@types/async-lock": "npm:@types/async-lock@1.4.2",
+      "npm:@types/turndown": "npm:@types/turndown@5.0.4",
       "npm:async-lock": "npm:async-lock@1.4.0",
       "npm:await-semaphore": "npm:await-semaphore@0.1.3",
       "npm:camelcase-keys": "npm:camelcase-keys@9.1.2",
@@ -11,6 +12,10 @@
     "npm": {
       "@types/async-lock@1.4.2": {
         "integrity": "sha512-HlZ6Dcr205BmNhwkdXqrg2vkFMN2PluI7Lgr8In3B3wE5PiQHhjRqtW/lGdVU9gw+sM0JcIDx2AN+cW8oSWIcw==",
+        "dependencies": {}
+      },
+      "@types/turndown@5.0.4": {
+        "integrity": "sha512-28GI33lCCkU4SGH1GvjDhFgOVr+Tym4PXGBIU1buJUa6xQolniPArtUT+kv42RR2N9MsMLInkr904Aq+ESHBJg==",
         "dependencies": {}
       },
       "async-lock@1.4.0": {

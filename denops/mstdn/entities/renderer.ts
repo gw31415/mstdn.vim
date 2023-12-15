@@ -1,6 +1,7 @@
 import * as batch from "https://deno.land/x/denops_std@v5.1.0/batch/mod.ts";
 import { Denops } from "https://deno.land/x/denops_std@v5.1.0/mod.ts";
 import * as fn from "https://deno.land/x/denops_std@v5.1.0/function/mod.ts";
+// @deno-types="npm:@types/turndown"
 import TurndownService from "npm:turndown";
 // @deno-types="npm:@types/async-lock"
 import AsyncLock from "npm:async-lock";
@@ -91,9 +92,10 @@ export class TimelineRenderer {
 	public async addLoadMore(denops: Denops) {
 		const lastStatus = this._statuses.at(0);
 		if (lastStatus?.type === "LoadMore") return;
-		const createdAt = lastStatus !== undefined
-			? lastStatus.data.createdAt
-			: new Date(0).toISOString();
+		const createdAt =
+			lastStatus !== undefined
+				? lastStatus.data.createdAt
+				: new Date(0).toISOString();
 		const item: StatusOrLoadMore = {
 			type: "LoadMore",
 			data: {
@@ -160,8 +162,7 @@ export class TimelineRenderer {
 		 */
 		let changeBottomIdx = 0;
 		function sorter(l: StatusOrLoadMore, r: StatusOrLoadMore) {
-			const diff = Date.parse(r.data.createdAt) -
-				Date.parse(l.data.createdAt);
+			const diff = Date.parse(r.data.createdAt) - Date.parse(l.data.createdAt);
 			if (diff !== 0) return diff;
 			if (r.type === "LoadMore") return 1;
 			return r.data.id.localeCompare(l.data.id);
@@ -225,13 +226,13 @@ export class TimelineRenderer {
 		const favitems = this._statuses.flatMap((v, i) =>
 			v.type === "Status" && ((v.data as Status).favourited ?? false)
 				? [
-					{
-						buffer: this.bufnr,
-						name: "fav",
-						lnum: i + 1,
-					},
-				]
-				: []
+						{
+							buffer: this.bufnr,
+							name: "fav",
+							lnum: i + 1,
+						},
+				  ]
+				: [],
 		);
 		const lines = this._statuses.map(render);
 		const [v, bufnr] = await batch.collect(denops, (denops) => [
@@ -240,9 +241,7 @@ export class TimelineRenderer {
 		]);
 		await batch.batch(denops, async (denops) => {
 			await editBuffer(denops, this.bufnr, async (denops) => {
-				await denops.cmd(
-					`sil! cal deletebufline(${this.bufnr}, 1, '$')`,
-				);
+				await denops.cmd(`sil! cal deletebufline(${this.bufnr}, 1, '$')`);
 				await fn.setbufline(denops, this.bufnr, 1, lines);
 				if (bufnr === this.bufnr) {
 					// 現在のバッファにいる時は閲覧画面を維持する
@@ -283,16 +282,14 @@ function render(item: StatusOrLoadMore<"Status" | "LoadMore">): string {
 			? `${data.account.username.slice(0, ACCOUNT_LENGTH - 1)}…`
 			: data.account.username
 	}`;
-	let content = (turndownService.turndown(data.content) as string).replaceAll('~', '\\~');
+	let content = turndownService.turndown(data.content).replaceAll("~", "\\~");
 	// .replace(/\r?\n+/g, " ")
 	// .replace("\r", " ");
 	function formatDateTime(time: string) {
 		return new Date(Date.parse(time)).toLocaleString();
 	}
 	if (data.editedAt) {
-		content = `${content} <!-- edited at ${
-			formatDateTime(data.editedAt)
-		} -->`;
+		content = `${content} <!-- edited at ${formatDateTime(data.editedAt)} -->`;
 	} else {
 		content = `${content} <!-- ${formatDateTime(data.createdAt)} -->`;
 	}
