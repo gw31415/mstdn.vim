@@ -91,7 +91,11 @@ export class TimelineRenderer {
 	public async insertLoadMore(denops: Denops) {
 		const lastStatus = this._statuses.at(0);
 		if (lastStatus?.type === "LoadMore") return;
-		const createdAt = lastStatus?.data.createdAt ?? new Date(0).toISOString();
+		const createdAt = (
+			lastStatus !== undefined
+				? new Date(Date.parse(lastStatus.data.createdAt) + 1)
+				: new Date(0)
+		).toISOString();
 		const item: StatusOrLoadMore = {
 			type: "LoadMore",
 			data: {
@@ -169,8 +173,10 @@ export class TimelineRenderer {
 				const diff = sorter(update[0], old[0]);
 
 				if (diff <= 0) {
-					if (opts.update_only && update[0].data.id === old[0].data.id) {
+					if (update[0].data.id === old[0].data.id) {
 						old.shift();
+					} else if (opts.update_only) {
+						update.shift();
 					}
 					results.push(update.shift() as StatusOrLoadMore);
 				} else {
