@@ -4,7 +4,6 @@ Mastodon client for Vim/Neovim.
 
 ![output](https://github.com/gw31415/mstdn.vim/assets/24710985/fd6b1bce-a544-47a9-ae45-95fa149bff3a)
 
-
 ## Installation & Config Example
 
 - Deno and [denops](https://github.com/vim-denops/denops.vim) is required.
@@ -12,6 +11,9 @@ Mastodon client for Vim/Neovim.
 ```vim
 call dein#add("vim-denops/denops.vim") " Required
 call dein#add("gw31415/mstdn.vim")
+
+" For Neovim users:
+call dein#add("MeanderingProgrammer/markdown.nvim") " Recommended: Better visibility of hashtags and other links
 
 " Optional: Post editor window
 call dein#add("gw31415/mstdn-editor.vim")
