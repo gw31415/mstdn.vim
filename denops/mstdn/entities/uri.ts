@@ -22,7 +22,7 @@ export type StreamType =
 /**
  * ストリームの種類
  */
-export interface Stream<T extends StreamType> {
+export interface Stream<T extends StreamType = StreamType> {
 	stream: T;
 	list: T extends "list" ? string : undefined;
 	tag: T extends "hashtag" | "hashtag:local" ? string : undefined;
@@ -35,7 +35,7 @@ export interface Method {
 	/**
 	 * WebSocket確立のためのStream
 	 */
-	get stream(): Stream<StreamType>;
+	get stream(): Stream;
 	/**
 	 * REST APIのエンドポイント
 	 */

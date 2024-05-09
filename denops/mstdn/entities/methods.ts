@@ -7,7 +7,7 @@ export class HashTag implements Method {
 		this.local = args.local;
 		this.tag = args.tag;
 	}
-	get stream(): Stream<StreamType> {
+	get stream(): Stream {
 		const stream: StreamType = this.local ? "hashtag:local" : "hashtag";
 		return {
 			stream,
@@ -21,7 +21,7 @@ export class HashTag implements Method {
 }
 
 export class Home implements Method {
-	get stream(): Stream<StreamType> {
+	get stream(): Stream {
 		return {
 			stream: "user",
 			list: undefined,
@@ -53,7 +53,7 @@ export class Public implements Method {
 		}
 		this.only_media = args.only_media;
 	}
-	get stream(): Stream<StreamType> {
+	get stream(): Stream {
 		const stream: StreamType = this.local
 			? this.only_media ? "public:local:media" : "public:local"
 			: this.remote
