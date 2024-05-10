@@ -2,7 +2,7 @@
 
 Mastodon client for Vim/Neovim.
 
-![output](https://github.com/gw31415/mstdn.vim/assets/24710985/fd6b1bce-a544-47a9-ae45-95fa149bff3a)
+![out](https://github.com/gw31415/mstdn.vim/assets/24710985/fd1b5df0-44cb-4b32-b83a-f756d493d7f7)
 
 ## Installation & Config Example
 
@@ -80,6 +80,64 @@ For example, you can post `Hello, world!` in this way:
 
 The second argument is the dictionary of the
 [Form Data Parameters](https://docs.joinmastodon.org/methods/statuses/#form-data-parameters).
+
+### Image preview
+
+If you want to preview an image, you can get the image data formatted in SIXEL.
+You can display the image by outputting the SIXEL string with echoraw, etc. on a SIXEL compatible terminal (iTerm 2, Wezterm, etc.).
+
+```vim
+const s:FONTHEIGHT = 14
+const s:FONTWIDTH = s:FONTHEIGHT / 2
+const s:RETINA_SCALE = 2
+
+autocmd BufReadCmd mstdn://* call s:mstdn_config()
+
+let s:echoraw = has('nvim')
+			\ ? {str->chansend(v:stderr, str)}
+			\ : {str->echoraw(str)}
+
+function s:refresh() abort
+	if exists('b:img_index')
+		unlet b:img_index
+	endif
+	exec "norm! \<ESC>\<C-l>"
+endfunction
+
+function s:display_sixel(sixel, lnum, cnum) abort
+	call s:echoraw("\x1b[s")
+	call s:echoraw("\x1b[" . a:lnum . ";" . a:cnum . "H" . a:sixel)
+	call s:echoraw("\x1b[u")
+endfunction
+
+function s:preview_cur_img(next) abort
+	if !exists('b:img_index')
+		let b:img_index = 0
+	else
+		let b:img_index = b:img_index + a:next
+	endif
+	let ww = winwidth('.')
+	let wh = winheight('.')
+	let maxWidth = ww * s:FONTWIDTH / 2 * s:RETINA_SCALE
+	let maxHeight = wh * s:FONTHEIGHT / 2 * s:RETINA_SCALE
+	let source = mstdn#timeline#img_sixel(b:img_index, v:true, #{maxWidth: maxWidth, maxHeight: maxHeight})
+	if type(source) == type(v:null)
+		let b:img_index = b:img_index - a:next
+		lua vim.notify("No image found", vim.log.levels.ERROR)
+		return
+	endif
+
+	cal s:display_sixel(source['data'], 0, 0)
+	au CursorMoved,CursorMovedI,BufLeave <buffer> ++once call s:refresh()
+endfunction
+```
+
+Then, you can map the keybinds.
+
+```vim
+nn <buffer> <C-k> <cmd>call <SID>preview_cur_img(-1)<cr>
+nn <buffer> <C-j> <cmd>call <SID>preview_cur_img(+1)<cr>
+```
 
 ## API
 
