@@ -293,5 +293,7 @@ function render(item: StatusOrLoadMore<"Status" | "LoadMore">): string {
 	} else {
 		content = `${content} <!-- ${formatDateTime(data.createdAt)} -->`;
 	}
-	return `${username}: ${content}`;
+	const img_count = data.mediaAttachments.filter((v) => v.type === "image").length;
+	const img = img_count > 0 ? `\udb80\udee9 ${img_count} ` : "----";
+	return `${img}${username}: ${content}`;
 }

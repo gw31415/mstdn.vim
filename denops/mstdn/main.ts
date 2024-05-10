@@ -16,6 +16,7 @@ import {
 } from "./entities/mod.ts";
 import { CreateStatusParams, Status } from "./entities/masto.d.ts";
 import camelcaseKeys from "npm:camelcase-keys";
+import { img2sixel } from "./sixel.ts";
 
 const BUFFERS = new Map<
 	number,
@@ -108,6 +109,29 @@ export async function main(denops: Denops): Promise<void> {
 				throw new Error("index is not valid");
 			}
 			return item.data?.id;
+		},
+		getStatus(index, bufnr) {
+			if (!isNumber(bufnr) || !isNumber(index)) {
+				throw new Error("not number value");
+			}
+			const b = BUFFERS.get(bufnr);
+			if (!b) {
+				throw new Error(`buf numbered ${bufnr} is not mstdn buffer`);
+			}
+			const item = b.renderer.statuses.at(index);
+			if (!item || item.data === null) {
+				throw new Error("index is not valid");
+			}
+			if (item.type === "LoadMore") {
+				throw new Error("LOAD_MORE is not status item");
+			}
+			return item.data;
+		},
+		img2sixel(source, opts = {}) {
+			if (!isString(source)) {
+				throw new Error("not string value");
+			}
+			return img2sixel(source, opts!);
 		},
 		timelines(): number[] {
 			return Array.from(BUFFERS.keys());

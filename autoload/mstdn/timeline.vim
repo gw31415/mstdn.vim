@@ -16,6 +16,24 @@ function mstdn#timeline#unfavourite(lnum = line('.'), bufnr = bufnr()) abort
 	return denops#notify('mstdn', 'requestMstdn', [user, endpoint, 'POST', v:null])
 endfunction
 
+function mstdn#timeline#status(lnum = line('.'), bufnr = bufnr()) abort
+	return denops#request("mstdn", "getStatus", [a:lnum - 1, a:bufnr])
+endfunction
+
+function mstdn#timeline#img_sixel(index, preview, opts, lnum = line('.'), bufnr = bufnr()) abort
+	let key = a:preview ? 'preview_url' : 'url'
+    let imgs = mstdn#timeline#status(a:lnum, a:bufnr)['mediaAttachments']
+				\ ->filter({_, v -> v['type'] == 'image'})
+	if len(imgs) == 0
+		return v:null
+	end
+	let index = a:index % len(imgs)
+	if index < 0
+		let index = len(imgs) + index
+	end
+	return denops#request("mstdn", "img2sixel", [imgs[index][key], a:opts])
+endfunction
+
 function mstdn#timeline#status_id(lnum = line('.'), bufnr = bufnr()) abort
 	return denops#request("mstdn", "getStatusId", [a:lnum - 1, a:bufnr])
 endfunction
