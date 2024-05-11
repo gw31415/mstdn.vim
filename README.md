@@ -145,7 +145,7 @@ endfunction
 Then, you can map the keybinds.
 
 ```vim
-nn <buffer> <ESC> <ESC><cmd>call <SID>refresh()<cr>
+nn <buffer> <ESC> <ESC><cmd>call <SID>clear()<cr>
 nn <buffer> <C-k> <cmd>call <SID>preview_cur_img(-1)<cr>
 nn <buffer> <C-j> <cmd>call <SID>preview_cur_img(+1)<cr>
 ```
