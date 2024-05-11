@@ -86,55 +86,66 @@ The second argument is the dictionary of the
 If you want to preview an image, you can get the image data formatted in SIXEL.
 You can display the image by outputting the SIXEL string with echoraw, etc. on a SIXEL compatible terminal (iTerm 2, Wezterm, etc.).
 
+First, you need to install [denops-sixel-view](https://github.com/gw31415/denops-sixel-view) and set up the configuration.
+
 ```vim
+" Install denops-sixel-view
+call dein#add("gw31415/denops-sixel-view")
+
 const s:FONTHEIGHT = 14
 const s:FONTWIDTH = s:FONTHEIGHT / 2
 const s:RETINA_SCALE = 2
 
-autocmd BufReadCmd mstdn://* call s:mstdn_config()
+" b:img_index holds how many images are currently displayed
 
-let s:echoraw = has('nvim')
-			\ ? {str->chansend(v:stderr, str)}
-			\ : {str->echoraw(str)}
-
-function s:refresh() abort
+function s:clear() abort
 	if exists('b:img_index')
 		unlet b:img_index
 	endif
-	exec "norm! \<ESC>\<C-l>"
-endfunction
-
-function s:display_sixel(sixel, lnum, cnum) abort
-	call s:echoraw("\x1b[s")
-	call s:echoraw("\x1b[" . a:lnum . ";" . a:cnum . "H" . a:sixel)
-	call s:echoraw("\x1b[u")
+	call sixel_view#clear()
 endfunction
 
 function s:preview_cur_img(next) abort
+  " Multiplier Calculation
+	let ww = winwidth('.')
+	let wh = winheight('.')
+	let maxWidth = ww * s:FONTWIDTH / 2 * s:RETINA_SCALE
+	let maxHeight = wh * s:FONTHEIGHT / 2 * s:RETINA_SCALE
+
+  " Extract image URL
+  let imgs = mstdn#timeline#status()['mediaAttachments']
+      \ ->filter({_, v -> v['type'] == 'image'})
+	if len(imgs) == 0
+		lua vim.notify("No image found", vim.log.levels.ERROR)
+		return
+	endif
+
+  " Update index of images
+  " Loop by taking the remainder of b:img_index divided by the number of images
 	if !exists('b:img_index')
 		let b:img_index = 0
 	else
 		let b:img_index = b:img_index + a:next
 	endif
-	let ww = winwidth('.')
-	let wh = winheight('.')
-	let maxWidth = ww * s:FONTWIDTH / 2 * s:RETINA_SCALE
-	let maxHeight = wh * s:FONTHEIGHT / 2 * s:RETINA_SCALE
-	let source = mstdn#timeline#img_sixel(b:img_index, v:true, #{maxWidth: maxWidth, maxHeight: maxHeight})
-	if type(source) == type(v:null)
-		let b:img_index = b:img_index - a:next
-		lua vim.notify("No image found", vim.log.levels.ERROR)
-		return
+	let index = b:img_index % len(imgs)
+	if index < 0
+		let index = len(imgs) + index
 	endif
 
-	cal s:display_sixel(source['data'], 0, 0)
-	au CursorMoved,CursorMovedI,BufLeave <buffer> ++once call s:refresh()
+	let key = 'preview_url' " or 'url'
+	let url = imgs[index][key]
+	
+  " Show Image
+	call sixel_view#view(url, #{maxWidth: maxWidth, maxHeight: maxHeight}, 0, 0)
+  " Close the image by moving the cursor
+	au CursorMoved,CursorMovedI,BufLeave <buffer> ++once call s:clear()
 endfunction
 ```
 
 Then, you can map the keybinds.
 
 ```vim
+nn <buffer> <ESC> <ESC><cmd>call <SID>refresh()<cr>
 nn <buffer> <C-k> <cmd>call <SID>preview_cur_img(-1)<cr>
 nn <buffer> <C-j> <cmd>call <SID>preview_cur_img(+1)<cr>
 ```
