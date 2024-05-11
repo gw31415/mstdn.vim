@@ -16,7 +16,6 @@ import {
 } from "./entities/mod.ts";
 import { CreateStatusParams, Status } from "./entities/masto.d.ts";
 import camelcaseKeys from "npm:camelcase-keys";
-import { img2sixel } from "./sixel.ts";
 
 const BUFFERS = new Map<
 	number,
@@ -126,12 +125,6 @@ export async function main(denops: Denops): Promise<void> {
 				throw new Error("LOAD_MORE is not status item");
 			}
 			return item.data;
-		},
-		img2sixel(source, opts = {}) {
-			if (!isString(source)) {
-				throw new Error("not string value");
-			}
-			return img2sixel(source, opts!);
 		},
 		timelines(): number[] {
 			return Array.from(BUFFERS.keys());
