@@ -28,6 +28,7 @@ function s:mstdn_config() abort
     nn <buffer> <expr> G getcurpos()[1] == line('$') ? "\<cmd>call mstdn#timeline#load_more()\<cr>" : "\<cmd>norm! G\<cr>"
     nn <buffer><nowait> > <cmd>call mstdn#timeline#favourite()<cr>
     nn <buffer><nowait> < <cmd>call mstdn#timeline#unfavourite()<cr>
+	nn <buffer><nowait> <C-r> <cmd>call mstdn#timeline#reconnect()<cr>
 
     " Configuration for mstdn-editor.vim
     nn <buffer> i <Plug>(mstdn-editor-open)
