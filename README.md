@@ -86,11 +86,11 @@ The second argument is the dictionary of the
 If you want to preview an image, you can get the image data formatted in SIXEL.
 You can display the image by outputting the SIXEL string with echoraw, etc. on a SIXEL compatible terminal (iTerm 2, Wezterm, etc.).
 
-First, you need to install [denops-sixel-view](https://github.com/gw31415/denops-sixel-view) and set up the configuration.
+First, you need to install [denops-sixel-view.vim](https://github.com/gw31415/denops-sixel-view.vim) and set up the configuration.
 
 ```vim
 " Install denops-sixel-view
-call dein#add("gw31415/denops-sixel-view")
+call dein#add("gw31415/denops-sixel-view.vim")
 
 const s:FONTHEIGHT = 14
 const s:FONTWIDTH = s:FONTHEIGHT / 2
