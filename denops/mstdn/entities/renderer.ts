@@ -78,7 +78,7 @@ export class TimelineRenderer {
 		const bufnr = await (denops.call("bufnr") as Promise<number>);
 		batch.batch(denops, async (denops) => {
 			await denops.cmd("setl bt=nofile noswf noma nowrap ft=markdown");
-			await denops.cmd("syntax match Author /^.\\{-}:\\ /");
+			await denops.cmd("syntax match Author /^↳\\?\\zs.\\{-}:\\ /");
 			await denops.cmd("syntax match MstdnLoadMore /^(LOAD MORE)$/");
 			await denops.cmd("highlight link Author Comment");
 			await denops.cmd("highlight link MstdnLoadMore WildMenu");
@@ -289,11 +289,12 @@ function render(item: StatusOrLoadMore<"Status" | "LoadMore">): string {
 		return new Date(Date.parse(time)).toLocaleString();
 	}
 	if (data.editedAt) {
-		content = `${content} <!-- edited at ${formatDateTime(data.editedAt)} -->`;
+		content += ` <!-- edited at ${formatDateTime(data.editedAt)} -->`;
 	} else {
-		content = `${content} <!-- ${formatDateTime(data.createdAt)} -->`;
+		content += ` <!-- ${formatDateTime(data.createdAt)} -->`;
 	}
 	const img_count = data.mediaAttachments.filter((v) => v.type === "image").length;
 	const img = img_count > 0 ? `\udb80\udee9 ${img_count} ` : "----";
-	return `${img}${username}: ${content}`;
+	const isReply = data.inReplyToId ? "↳ " : "--";
+	return `${isReply}${img}${username}: ${content}`;
 }
