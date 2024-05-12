@@ -80,21 +80,10 @@ mstdn#timeline#status_id({lnum}, {bufnr})           *mstdn#timeline#status_id()*
     {lnum}        Line number of the status, defaults to current line.
     {bufnr}       Buffer number, defaults to current buffer.
 
-mstdn#timeline#status({lnum}, {bufnr})               *mstdn#timeline#status()*
+mstdn#timeline#status({lnum}, {bufnr})                 *mstdn#timeline#status()*
 
     Get the status data in a buffer.
 
-    {lnum}        Line number of the status, defaults to current line.
-    {bufnr}       Buffer number, defaults to current buffer.
-
-mstdn#timeline#img_sixel({index}, {preview}, {opts}, {lnum}, {bufnr})
-                                                  *mstdn#timeline#img_sixel()*
-
-    Display an image in a buffer using Sixel.
-
-    {index}       Index of the image in the status.
-    {preview}     Whether to display the preview image or the original.
-    {opts}        Additional options for the image. maxWidth and maxHeight are supported.
     {lnum}        Line number of the status, defaults to current line.
     {bufnr}       Buffer number, defaults to current buffer.
 
