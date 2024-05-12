@@ -100,46 +100,46 @@ const s:RETINA_SCALE = 2
 " b:img_index holds how many images are currently displayed
 
 function s:clear() abort
-	if exists('b:img_index')
-		unlet b:img_index
-	endif
-	call sixel_view#clear()
+  if exists('b:img_index')
+    unlet b:img_index
+  endif
+  call sixel_view#clear()
 endfunction
 
 function s:preview_cur_img(next) abort
   " Multiplier Calculation
-	let ww = winwidth('.')
-	let wh = winheight('.')
-	let maxWidth = ww * s:FONTWIDTH / 2 * s:RETINA_SCALE
-	let maxHeight = wh * s:FONTHEIGHT / 2 * s:RETINA_SCALE
+  let ww = winwidth('.')
+  let wh = winheight('.')
+  let maxWidth = ww * s:FONTWIDTH / 2 * s:RETINA_SCALE
+  let maxHeight = wh * s:FONTHEIGHT / 2 * s:RETINA_SCALE
 
   " Extract image URL
   let imgs = mstdn#timeline#status()['mediaAttachments']
       \ ->filter({_, v -> v['type'] == 'image'})
-	if len(imgs) == 0
-		lua vim.notify("No image found", vim.log.levels.ERROR)
-		return
-	endif
+  if len(imgs) == 0
+    lua vim.notify("No image found", vim.log.levels.ERROR)
+    return
+  endif
 
   " Update index of images
   " Loop by taking the remainder of b:img_index divided by the number of images
-	if !exists('b:img_index')
-		let b:img_index = 0
-	else
-		let b:img_index = b:img_index + a:next
-	endif
-	let index = b:img_index % len(imgs)
-	if index < 0
-		let index = len(imgs) + index
-	endif
+  if !exists('b:img_index')
+    let b:img_index = 0
+  else
+    let b:img_index = b:img_index + a:next
+  endif
+  let index = b:img_index % len(imgs)
+  if index < 0
+    let index = len(imgs) + index
+  endif
 
-	let key = 'preview_url' " or 'url'
-	let url = imgs[index][key]
-	
+  let key = 'preview_url' " or 'url'
+  let url = imgs[index][key]
+  
   " Show Image
-	call sixel_view#view(url, #{maxWidth: maxWidth, maxHeight: maxHeight}, 0, 0)
+  call sixel_view#view(url, #{maxWidth: maxWidth, maxHeight: maxHeight}, 0, 0)
   " Close the image by moving the cursor
-	au CursorMoved,CursorMovedI,BufLeave <buffer> ++once call s:clear()
+  au CursorMoved,CursorMovedI,BufLeave <buffer> ++once call s:clear()
 endfunction
 ```
 
