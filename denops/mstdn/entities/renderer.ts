@@ -1,6 +1,6 @@
-import * as batch from "https://deno.land/x/denops_std@v6.5.1/batch/mod.ts";
-import type { Denops } from "https://deno.land/x/denops_std@v6.5.1/mod.ts";
-import * as fn from "https://deno.land/x/denops_std@v6.5.1/function/mod.ts";
+import * as batch from "jsr:@denops/std/batch";
+import type { Denops } from "jsr:@denops/std";
+import * as fn from "jsr:@denops/std/function";
 // @deno-types="npm:@types/turndown"
 import TurndownService from "npm:turndown";
 // @deno-types="npm:@types/async-lock"

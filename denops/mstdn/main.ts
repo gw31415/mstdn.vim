@@ -1,6 +1,6 @@
-import * as autocmd from "https://deno.land/x/denops_std@v6.5.1/autocmd/mod.ts";
-import * as batch from "https://deno.land/x/denops_std@v6.5.1/batch/mod.ts";
-import type { Denops } from "https://deno.land/x/denops_std@v6.5.1/mod.ts";
+import * as autocmd from "jsr:@denops/std/autocmd";
+import * as batch from "jsr:@denops/std/batch";
+import type { Denops } from "jsr:@denops/std";
 import {
 	isNumber,
 	isString,

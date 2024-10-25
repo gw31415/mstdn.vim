@@ -1,5 +1,5 @@
-import * as helper from "https://deno.land/x/denops_std@v6.5.1/helper/mod.ts";
-import type { Denops } from "https://deno.land/x/denops_std@v6.5.1/mod.ts";
+import * as helper from "jsr:@denops/std/helper";
+import type { Denops } from "jsr:@denops/std";
 
 /**
  * メッセージを表示する
@@ -10,15 +10,10 @@ export async function msg(
 	opts: { level: "INFO" | "ERROR" },
 ) {
 	if (denops.meta.host === "nvim") {
-		await denops.call(
-			"nvim_notify",
-			message,
-			opts.level === "INFO" ? 2 : 4,
-			{
-				title: "mstdn.vim", // for nvim-notify
-				annote: "mstdn.vim", // for fidget.vim
-			},
-		);
+		await denops.call("nvim_notify", message, opts.level === "INFO" ? 2 : 4, {
+			title: "mstdn.vim", // for nvim-notify
+			annote: "mstdn.vim", // for fidget.vim
+		});
 	} else {
 		const msg = `mstdn.vim: ${message}`;
 		if (opts.level === "INFO") {
