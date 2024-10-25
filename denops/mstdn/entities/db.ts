@@ -2,8 +2,8 @@ import cache_dir from "https://deno.land/x/dir@1.5.2/cache_dir/mod.ts";
 import {
 	fromFileUrl,
 	toFileUrl,
-} from "https://deno.land/std@0.205.0/path/mod.ts";
-import * as sqlite from "https://deno.land/x/sqlite@v3.8/mod.ts";
+} from "https://deno.land/std@0.224.0/path/mod.ts";
+import * as sqlite from "https://deno.land/x/sqlite@v3.9.1/mod.ts";
 
 const __cache_dir = cache_dir();
 /**

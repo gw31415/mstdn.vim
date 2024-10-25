@@ -1,5 +1,5 @@
-import * as helper from "https://deno.land/x/denops_std@v5.1.0/helper/mod.ts";
-import { Denops } from "https://deno.land/x/denops_std@v5.1.0/mod.ts";
+import * as helper from "https://deno.land/x/denops_std@v6.5.1/helper/mod.ts";
+import type { Denops } from "https://deno.land/x/denops_std@v6.5.1/mod.ts";
 
 /**
  * メッセージを表示する

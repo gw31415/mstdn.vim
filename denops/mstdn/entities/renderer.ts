@@ -1,6 +1,6 @@
-import * as batch from "https://deno.land/x/denops_std@v5.1.0/batch/mod.ts";
-import { Denops } from "https://deno.land/x/denops_std@v5.1.0/mod.ts";
-import * as fn from "https://deno.land/x/denops_std@v5.1.0/function/mod.ts";
+import * as batch from "https://deno.land/x/denops_std@v6.5.1/batch/mod.ts";
+import type { Denops } from "https://deno.land/x/denops_std@v6.5.1/mod.ts";
+import * as fn from "https://deno.land/x/denops_std@v6.5.1/function/mod.ts";
 // @deno-types="npm:@types/turndown"
 import TurndownService from "npm:turndown";
 // @deno-types="npm:@types/async-lock"
@@ -23,7 +23,7 @@ async function editBuffer(
 	});
 }
 
-import { Status } from "./masto.d.ts";
+import type { Status } from "./masto.d.ts";
 
 type WinSaveView = {
 	lnum: number;
@@ -231,7 +231,7 @@ export class TimelineRenderer {
 							name: "fav",
 							lnum: i + 1,
 						},
-				  ]
+					]
 				: [],
 		);
 		const lines = this._statuses.map(render);
@@ -293,7 +293,9 @@ function render(item: StatusOrLoadMore<"Status" | "LoadMore">): string {
 	} else {
 		content += ` <!-- ${formatDateTime(data.createdAt)} -->`;
 	}
-	const img_count = data.mediaAttachments.filter((v) => v.type === "image").length;
+	const img_count = data.mediaAttachments.filter(
+		(v) => v.type === "image",
+	).length;
 	const img = img_count > 0 ? `\udb80\udee9 ${img_count} ` : "----";
 	const isReply = data.inReplyToId ? "↳ " : "--";
 	return `${isReply}${img}${username}: ${content}`;

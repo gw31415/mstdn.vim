@@ -1,4 +1,4 @@
-import { Method, Stream, StreamType } from "./uri.ts";
+import type { Method, Stream, StreamType } from "./uri.ts";
 
 export class HashTag implements Method {
 	private local: boolean;

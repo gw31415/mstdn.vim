@@ -7,10 +7,10 @@ import type {
 	Reaction,
 	Status,
 } from "./masto.d.ts";
-import { fromFileUrl } from "https://deno.land/std@0.205.0/path/mod.ts";
+import { fromFileUrl } from "https://deno.land/std@0.224.0/path/mod.ts";
 import { DB, DB_URL } from "./db.ts";
-import * as sqlite from "https://deno.land/x/sqlite@v3.8/mod.ts";
-import { Method, StreamType } from "./uri.ts";
+import * as sqlite from "https://deno.land/x/sqlite@v3.9.1/mod.ts";
+import type { Method, StreamType } from "./uri.ts";
 import camelcaseKeys from "npm:camelcase-keys";
 
 /**

@@ -1,10 +1,10 @@
-import * as autocmd from "https://deno.land/x/denops_std@v5.1.0/autocmd/mod.ts";
-import * as batch from "https://deno.land/x/denops_std@v5.1.0/batch/mod.ts";
-import { Denops } from "https://deno.land/x/denops_std@v5.1.0/mod.ts";
+import * as autocmd from "https://deno.land/x/denops_std@v6.5.1/autocmd/mod.ts";
+import * as batch from "https://deno.land/x/denops_std@v6.5.1/batch/mod.ts";
+import type { Denops } from "https://deno.land/x/denops_std@v6.5.1/mod.ts";
 import {
 	isNumber,
 	isString,
-} from "https://deno.land/x/unknownutil@v3.10.0/mod.ts#^.ts";
+} from "https://deno.land/x/unknownutil@v3.18.1/mod.ts";
 import {
 	listLoginUsers,
 	login,
@@ -14,7 +14,7 @@ import {
 	User,
 	vim,
 } from "./entities/mod.ts";
-import { CreateStatusParams, Status } from "./entities/masto.d.ts";
+import type { CreateStatusParams, Status } from "./entities/masto.d.ts";
 import camelcaseKeys from "npm:camelcase-keys";
 
 const BUFFERS = new Map<
