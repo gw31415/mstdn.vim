@@ -55,12 +55,16 @@ export class Public implements Method {
 	}
 	get stream(): Stream {
 		const stream: StreamType = this.local
-			? this.only_media ? "public:local:media" : "public:local"
+			? this.only_media
+				? "public:local:media"
+				: "public:local"
 			: this.remote
-			? this.only_media ? "public:remote:media" : "public:remote"
-			: this.only_media
-			? "public:media"
-			: "public";
+				? this.only_media
+					? "public:remote:media"
+					: "public:remote"
+				: this.only_media
+					? "public:media"
+					: "public";
 		return {
 			stream,
 			list: undefined,

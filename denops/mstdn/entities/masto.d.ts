@@ -1282,9 +1282,8 @@ export type UpdateNotification = BaseNotificationWithStatus<"update">;
  * Someone signed up (optionally sent to admins)
  */
 export type AdminSignUpNotification = BaseNotificationPlain<"admin.sign_up">;
-export type AdminReportNotification = BaseNotificationWithReport<
-	"admin.report"
->;
+export type AdminReportNotification =
+	BaseNotificationWithReport<"admin.report">;
 /**
  * Represents a notification of an event relevant to the user.
  * @see https://docs.joinmastodon.org/entities/notification
@@ -1359,8 +1358,8 @@ export interface Relationship {
 	requestedBy: boolean;
 }
 
-export interface StatusParams extends
-	Pick<
+export interface StatusParams
+	extends Pick<
 		Status,
 		"id" | "inReplyToId" | "sensitive" | "spoilerText" | "visibility"
 	> {
@@ -1622,8 +1621,7 @@ declare namespace index$6 {
 		type index$6_PollNotification as PollNotification,
 		type index$6_PollOption as PollOption,
 		type index$6_Preference as Preference,
-		type index$6_PreferenceReadingExpandMedia
-			as PreferenceReadingExpandMedia,
+		type index$6_PreferenceReadingExpandMedia as PreferenceReadingExpandMedia,
 		type index$6_PreviewCard as PreviewCard,
 		type index$6_PreviewCardType as PreviewCardType,
 		type index$6_Reaction as Reaction,
@@ -1653,8 +1651,7 @@ declare namespace index$6 {
 		type Instance$1 as Instance,
 		type InstanceAccountsConfiguration$1 as InstanceAccountsConfiguration,
 		type InstanceConfiguration$1 as InstanceConfiguration,
-		type InstanceMediaAttachmentsConfiguration$1
-			as InstanceMediaAttachmentsConfiguration,
+		type InstanceMediaAttachmentsConfiguration$1 as InstanceMediaAttachmentsConfiguration,
 		type InstancePollsConfiguration$1 as InstancePollsConfiguration,
 		type InstanceStatusesConfiguration$1 as InstanceStatusesConfiguration,
 		type Report$1 as Report,
@@ -1833,15 +1830,13 @@ declare namespace index$5 {
 		index$5_InstanceAccountsConfiguration as InstanceAccountsConfiguration,
 		index$5_InstanceConfiguration as InstanceConfiguration,
 		index$5_InstanceContact as InstanceContact,
-		index$5_InstanceMediaAttachmentsConfiguration
-			as InstanceMediaAttachmentsConfiguration,
+		index$5_InstanceMediaAttachmentsConfiguration as InstanceMediaAttachmentsConfiguration,
 		index$5_InstancePollsConfiguration as InstancePollsConfiguration,
 		index$5_InstanceRegistrations as InstanceRegistrations,
 		index$5_InstanceStatusesConfiguration as InstanceStatusesConfiguration,
 		index$5_InstanceThumbnail as InstanceThumbnail,
 		index$5_InstanceThumbnailVersions as InstanceThumbnailVersions,
-		index$5_InstanceTranslationConfiguration
-			as InstanceTranslationConfiguration,
+		index$5_InstanceTranslationConfiguration as InstanceTranslationConfiguration,
 		index$5_InstanceUrls as InstanceUrls,
 		index$5_InstanceUsage as InstanceUsage,
 		index$5_InstanceUsageUsers as InstanceUsageUsers,
@@ -1923,11 +1918,9 @@ export interface UpdateCredentialsParams {
 	readonly header?: Blob | string | null;
 	/** Whether manual approval of follow requests is required. */
 	readonly locked?: boolean | null;
-	readonly source?:
-		| Partial<
-			Pick<AccountSource, "privacy" | "sensitive" | "language">
-		>
-		| null;
+	readonly source?: Partial<
+		Pick<AccountSource, "privacy" | "sensitive" | "language">
+	> | null;
 	/** Whether you want to hide followers and followings on your profile  */
 	readonly hideCollections?: boolean | null;
 	/**
@@ -2192,10 +2185,7 @@ export interface AccountRepository$1 {
 		 * Obtain a list of all accounts that follow a given account, filtered for accounts you follow.
 		 * @returns Array of FamiliarFollowers
 		 */
-		fetch(
-			id: string[],
-			meta?: HttpMetaParams,
-		): Promise<FamiliarFollowers[]>;
+		fetch(id: string[], meta?: HttpMetaParams): Promise<FamiliarFollowers[]>;
 	};
 }
 
@@ -3383,8 +3373,8 @@ export interface FetchMarkersParams {
 	readonly timeline?: readonly MarkerTimeline[];
 }
 export type CreateMarkersParams = {
-	readonly /** ID of the last status read in the timeline. */
-	[key in MarkerTimeline]?: Pick<MarkerItem, "lastReadId">;
+	/** ID of the last status read in the timeline. */
+	readonly [key in MarkerTimeline]?: Pick<MarkerItem, "lastReadId">;
 };
 export interface MarkerRepository {
 	/**
@@ -3416,9 +3406,8 @@ export interface CreateMediaAttachmentParams$1 {
 	/** Custom thumbnail */
 	readonly thumbnail?: Blob | string | null;
 }
-export type UpdateMediaAttachmentParams = Partial<
-	CreateMediaAttachmentParams$1
->;
+export type UpdateMediaAttachmentParams =
+	Partial<CreateMediaAttachmentParams$1>;
 export interface MediaAttachmentRepository$1 {
 	/**
 	 * Creates an attachment to be used with a new status.
@@ -4192,8 +4181,7 @@ declare namespace index$4 {
 		index$4_CreateScheduledStatusParams as CreateScheduledStatusParams,
 		index$4_CreateStatusParams as CreateStatusParams,
 		index$4_CreateStatusParamsBase as CreateStatusParamsBase,
-		index$4_CreateStatusParamsWithMediaIds
-			as CreateStatusParamsWithMediaIds,
+		index$4_CreateStatusParamsWithMediaIds as CreateStatusParamsWithMediaIds,
 		index$4_CreateStatusParamsWithStatus as CreateStatusParamsWithStatus,
 		index$4_CreateStatusPollParam as CreateStatusPollParam,
 		index$4_CustomEmojiRepository as CustomEmojiRepository,
@@ -4522,8 +4510,7 @@ declare namespace index$3 {
 		index$3_CreateFilterKeywordParams as CreateFilterKeywordParams,
 		index$3_CreateFilterParams as CreateFilterParams,
 		index$3_CreateFilterStatusParams as CreateFilterStatusParams,
-		index$3_CreateMediaAttachmentExtraParams
-			as CreateMediaAttachmentExtraParams,
+		index$3_CreateMediaAttachmentExtraParams as CreateMediaAttachmentExtraParams,
 		index$3_CreateMediaAttachmentParams as CreateMediaAttachmentParams,
 		index$3_FilterRepository as FilterRepository,
 		index$3_InstanceRepository as InstanceRepository,
