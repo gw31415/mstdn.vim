@@ -51,7 +51,6 @@ export async function main(denops: Denops): Promise<void> {
 				"*",
 				`call denops#notify("${denops.name}", "deleteBuffer", [str2nr(expand("<abuf>"))])`,
 			),
-			denops.cmd("highlight MstdnFavourite ctermfg=217 gui=bold guifg=#e86671"),
 		]);
 	});
 	denops.dispatcher = {

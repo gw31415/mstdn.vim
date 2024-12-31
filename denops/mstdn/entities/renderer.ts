@@ -80,9 +80,15 @@ export class TimelineRenderer {
 			await denops.cmd("setl bt=nofile noswf noma nowrap ft=markdown");
 			await denops.cmd("syntax match Author /^↳\\?\\zs.\\{-}:\\ /");
 			await denops.cmd("syntax match MstdnLoadMore /^(LOAD MORE)$/");
-			await denops.cmd("highlight link Author Comment");
-			await denops.cmd("highlight link MstdnLoadMore WildMenu");
+			await denops.cmd("autocmd ColorScheme * highlight link Author Comment");
 			await denops.cmd("sign define fav text=▸ texthl=MstdnFavourite");
+			await denops.cmd(
+				"autocmd ColorScheme * highlight link MstdnLoadMore WildMenu",
+			);
+			await denops.cmd(
+				"autocmd ColorScheme * highlight MstdnFavourite ctermfg=217 gui=bold guifg=#e86671",
+			);
+			await denops.cmd("doautocmd ColorScheme");
 		});
 		return new TimelineRenderer(bufnr);
 	}
