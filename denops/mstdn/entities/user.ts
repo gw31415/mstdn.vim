@@ -1,7 +1,7 @@
 import camelcaseKeys from "npm:camelcase-keys";
 import * as sqlite from "jsr:@mainframe-api/deno-sqlite";
 import { fromFileUrl } from "jsr:@std/path";
-import { DB, DB_URL } from "./db.ts";
+import { DB, DB_PATH } from "./db.ts";
 import type {
 	AccountCredentials,
 	Announcement,
@@ -44,7 +44,7 @@ export async function login(opts: { server: string; token: string }) {
 	}
 	const credentials: AccountCredentials = JSON.parse(body);
 	const username = credentials.username;
-	const DB = new sqlite.DB(fromFileUrl(DB_URL));
+	const DB = new sqlite.DB(fromFileUrl(DB_PATH));
 	DB.query(
 		"INSERT INTO users (username, server, token) VALUES (:username, :server, :token) ON CONFLICT (username, server) DO UPDATE SET token = :token",
 		{
@@ -68,7 +68,7 @@ export function logout(opts: { username: string; server: string }) {
 	) {
 		throw new Error("user not found");
 	}
-	const DB = new sqlite.DB(fromFileUrl(DB_URL));
+	const DB = new sqlite.DB(fromFileUrl(DB_PATH));
 	DB.query(
 		"DELETE FROM users WHERE username = :username AND server = :server",
 		{
