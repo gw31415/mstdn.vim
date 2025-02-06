@@ -44,7 +44,7 @@ export async function login(opts: { server: string; token: string }) {
 	}
 	const credentials: AccountCredentials = JSON.parse(body);
 	const username = credentials.username;
-	const DB = new sqlite.DB(fromFileUrl(DB_PATH));
+	const DB = new sqlite.DB(DB_PATH);
 	DB.query(
 		"INSERT INTO users (username, server, token) VALUES (:username, :server, :token) ON CONFLICT (username, server) DO UPDATE SET token = :token",
 		{
@@ -68,7 +68,7 @@ export function logout(opts: { username: string; server: string }) {
 	) {
 		throw new Error("user not found");
 	}
-	const DB = new sqlite.DB(fromFileUrl(DB_PATH));
+	const DB = new sqlite.DB(DB_PATH);
 	DB.query(
 		"DELETE FROM users WHERE username = :username AND server = :server",
 		{
