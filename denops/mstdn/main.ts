@@ -1,21 +1,18 @@
+import camelcaseKeys from "npm:camelcase-keys";
+import { isNumber, isString } from "jsr:@core/unknownutil";
+import type { Denops } from "jsr:@denops/std";
 import * as autocmd from "jsr:@denops/std/autocmd";
 import * as batch from "jsr:@denops/std/batch";
-import type { Denops } from "jsr:@denops/std";
+import type { CreateStatusParams, Status } from "./entities/masto.d.ts";
 import {
-	isNumber,
-	isString,
-} from "https://deno.land/x/unknownutil@v3.18.1/mod.ts";
-import {
+	TimelineRenderer,
+	User,
 	listLoginUsers,
 	login,
 	logout,
 	parseUri,
-	TimelineRenderer,
-	User,
 	vim,
 } from "./entities/mod.ts";
-import type { CreateStatusParams, Status } from "./entities/masto.d.ts";
-import camelcaseKeys from "npm:camelcase-keys";
 
 const BUFFERS = new Map<
 	number,
@@ -34,6 +31,11 @@ function deleteBuffer(bufnr: unknown) {
 		b.user.close(bufnr);
 	}
 	BUFFERS.delete(bufnr);
+}
+
+async function handleError(denops: Denops, e: unknown) {
+	const message = e instanceof Error ? e.message : `${e}`;
+	await vim.msg(denops, message, { level: "ERROR" });
 }
 
 export async function main(denops: Denops): Promise<void> {
@@ -76,7 +78,7 @@ export async function main(denops: Denops): Promise<void> {
 					}
 				}
 			} catch (e) {
-				await vim.msg(denops, `${e.message ?? e}`, { level: "ERROR" });
+				await handleError(denops, e);
 			}
 		},
 		user(bufnr): string {
@@ -154,11 +156,11 @@ export async function main(denops: Denops): Promise<void> {
 					server,
 				});
 			} catch (e) {
-				await vim.msg(denops, `${e.message ?? e}`, { level: "ERROR" });
+				await handleError(denops, e);
 			}
 		},
 		deleteBuffer,
-		reconnectAll() {
+		async reconnectAll() {
 			try {
 				for (const [_, b] of BUFFERS) {
 					if (b.user.status === "CLOSED") {
@@ -166,7 +168,7 @@ export async function main(denops: Denops): Promise<void> {
 					}
 				}
 			} catch (e) {
-				vim.msg(denops, `${e.message ?? e}`, { level: "ERROR" });
+				await handleError(denops, e);
 			}
 		},
 		async reconnectBuffer(bufnr) {
@@ -180,7 +182,7 @@ export async function main(denops: Denops): Promise<void> {
 				}
 				b.user.reconnect();
 			} catch (e) {
-				await vim.msg(denops, `${e.message ?? e}`, { level: "ERROR" });
+				await handleError(denops, e);
 			}
 		},
 		async redrawBuffer(bufnr) {
@@ -194,7 +196,7 @@ export async function main(denops: Denops): Promise<void> {
 				}
 				await b.renderer.redraw(denops);
 			} catch (e) {
-				await vim.msg(denops, `${e.message ?? e}`, { level: "ERROR" });
+				await handleError(denops, e);
 			}
 		},
 		async loadMore(index, bufnr) {
@@ -225,7 +227,7 @@ export async function main(denops: Denops): Promise<void> {
 					await b.renderer.delete(denops, status.data.id);
 				}
 			} catch (e) {
-				await vim.msg(denops, `${e.message ?? e}`, { level: "ERROR" });
+				await handleError(denops, e);
 			}
 		},
 		async loadBuffer() {
@@ -282,13 +284,7 @@ export async function main(denops: Denops): Promise<void> {
 				}
 				BUFFERS.set(bufnr, { user: uri.user, renderer });
 			} catch (e) {
-				await batch.batch(denops, async (denops) => {
-					await Promise.all([
-						vim.msg(denops, `${e.message ?? e}`, {
-							level: "ERROR",
-						}),
-					]);
-				});
+				await handleError(denops, e);
 			}
 		},
 	};

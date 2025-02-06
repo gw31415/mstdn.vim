@@ -1,5 +1,5 @@
-import * as helper from "jsr:@denops/std/helper";
 import type { Denops } from "jsr:@denops/std";
+import * as helper from "jsr:@denops/std/helper";
 
 /**
  * メッセージを表示する

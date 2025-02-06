@@ -1,3 +1,7 @@
+import camelcaseKeys from "npm:camelcase-keys";
+import * as sqlite from "jsr:@mainframe-api/deno-sqlite";
+import { fromFileUrl } from "jsr:@std/path";
+import { DB, DB_URL } from "./db.ts";
 import type {
 	AccountCredentials,
 	Announcement,
@@ -7,11 +11,7 @@ import type {
 	Reaction,
 	Status,
 } from "./masto.d.ts";
-import { fromFileUrl } from "jsr:@std/path";
-import { DB, DB_URL } from "./db.ts";
-import * as sqlite from "jsr:@mainframe-api/deno-sqlite";
 import type { Method, StreamType } from "./uri.ts";
-import camelcaseKeys from "npm:camelcase-keys";
 
 /**
  * ログイン済みユーザー一覧を得る
@@ -292,7 +292,8 @@ export class User {
 		);
 		if (users.length > 1) {
 			throw new Error("duplicate clients");
-		} else if (users.length !== 1) {
+		}
+		if (users.length !== 1) {
 			throw new Error("client not found");
 		}
 		const [server, { clients, sock }] = users[0];
