@@ -1,7 +1,6 @@
 import camelcaseKeys from "npm:camelcase-keys";
 import { isNumber, isString } from "jsr:@core/unknownutil";
 import type { Denops } from "jsr:@denops/std";
-import * as autocmd from "jsr:@denops/std/autocmd";
 import * as batch from "jsr:@denops/std/batch";
 import type { CreateStatusParams, Status } from "./entities/masto.d.ts";
 import {
@@ -38,23 +37,7 @@ async function handleError(denops: Denops, e: unknown) {
 	await vim.msg(denops, message, { level: "ERROR" });
 }
 
-export async function main(denops: Denops): Promise<void> {
-	await batch.batch(denops, async (denops) => {
-		await Promise.all([
-			autocmd.define(
-				denops,
-				"BufReadCmd",
-				"mstdn://*",
-				`call denops#notify("${denops.name}", "loadBuffer", [])`,
-			),
-			autocmd.define(
-				denops,
-				"BufDelete",
-				"*",
-				`call denops#notify("${denops.name}", "deleteBuffer", [str2nr(expand("<abuf>"))])`,
-			),
-		]);
-	});
+export function main(denops: Denops) {
 	denops.dispatcher = {
 		async requestMstdn(user, endpoint, method, body) {
 			try {
@@ -239,7 +222,7 @@ export async function main(denops: Denops): Promise<void> {
 				if (BUFFERS.has(bufnr)) {
 					deleteBuffer(bufnr);
 				}
-				const renderer = await TimelineRenderer.setupCurrentBuffer(denops);
+				const renderer = new TimelineRenderer(bufnr);
 				const uri = parseUri(bufname);
 				uri.user.subscribe({
 					id: bufnr,

@@ -60,7 +60,7 @@ interface StatusOrLoadMore<
 export class TimelineRenderer {
 	private _statuses: StatusOrLoadMore[] = [];
 	private bufnr: number;
-	private constructor(bufnr: number) {
+	constructor(bufnr: number) {
 		this.bufnr = bufnr;
 	}
 	/**
@@ -68,29 +68,6 @@ export class TimelineRenderer {
 	 */
 	get statuses() {
 		return this._statuses;
-	}
-	/**
-	 * 現在のバッファを初期設定する
-	 */
-	public static async setupCurrentBuffer(
-		denops: Denops,
-	): Promise<TimelineRenderer> {
-		const bufnr = await (denops.call("bufnr") as Promise<number>);
-		batch.batch(denops, async (denops) => {
-			await denops.cmd("setl bt=nofile noswf noma nowrap ft=markdown");
-			await denops.cmd("syntax match Author /^↳\\?\\zs.\\{-}:\\ /");
-			await denops.cmd("syntax match MstdnLoadMore /^(LOAD MORE)$/");
-			await denops.cmd("autocmd ColorScheme * highlight link Author Comment");
-			await denops.cmd("sign define fav text=▸ texthl=MstdnFavourite");
-			await denops.cmd(
-				"autocmd ColorScheme * highlight link MstdnLoadMore WildMenu",
-			);
-			await denops.cmd(
-				"autocmd ColorScheme * highlight MstdnFavourite ctermfg=217 gui=bold guifg=#e86671",
-			);
-			await denops.cmd("doautocmd ColorScheme");
-		});
-		return new TimelineRenderer(bufnr);
 	}
 	/**
 	 * 「さらに読み込む」マークを先頭に挿入する
