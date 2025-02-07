@@ -259,11 +259,12 @@ function render(item: StatusOrLoadMore<"Status" | "LoadMore">): string {
 	}
 	const data = item.data as Status;
 	const ACCOUNT_LENGTH = 10;
-	const spaces = ACCOUNT_LENGTH - data.account.username.length;
+	const data_account_username_sanitized = data.account.username.replace('_', '\\_');
+	const spaces = ACCOUNT_LENGTH - data_account_username_sanitized.length;
 	const username = `${"-".repeat(Math.max(spaces, 0))}@${
 		spaces < 0
-			? `${data.account.username.slice(0, ACCOUNT_LENGTH - 1)}…`
-			: data.account.username
+			? `${data_account_username_sanitized.slice(0, ACCOUNT_LENGTH - 1)}…`
+			: data_account_username_sanitized
 	}`;
 	let content = turndownService.turndown(data.content).replaceAll("~", "\\~");
 	// .replace(/\r?\n+/g, " ")
