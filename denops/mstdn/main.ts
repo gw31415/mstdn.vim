@@ -93,8 +93,13 @@ export function main(denops: Denops) {
 					throw new Error("failed to load image");
 				}
 				const aspect = image.width / image.height;
-				const width = aspect > 1 ? MAX_SIZE : MAX_SIZE * aspect;
-				const height = aspect > 1 ? MAX_SIZE / aspect : MAX_SIZE;
+				const [width, height] =
+					Math.max(image.width, image.height) > MAX_SIZE
+						? [
+								aspect > 1 ? MAX_SIZE : MAX_SIZE * aspect,
+								aspect > 1 ? MAX_SIZE / aspect : MAX_SIZE,
+							]
+						: [image.width, image.height];
 				const canvas = createCanvas(width, height);
 				const ctx = canvas.getContext("2d");
 				ctx.drawImage(image, 0, 0, width, height);
