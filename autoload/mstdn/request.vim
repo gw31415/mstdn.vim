@@ -8,3 +8,7 @@ function mstdn#request#edit(dict, lnum = line('.'), bufnr = bufnr()) abort
 	let endpoint = '/api/v1/statuses/' .. id
 	return denops#notify('mstdn', 'requestMstdn', [a:user, endpoint, 'PUT', a:dict])
 endfunction
+
+function mstdn#request#upload_attachment(user, dataOrUrl) abort
+	return denops#request("mstdn", "uploadAttachment", [a:user, a:dataOrUrl])
+endfunction

@@ -1,6 +1,5 @@
 import camelcaseKeys from "npm:camelcase-keys";
 import * as sqlite from "jsr:@mainframe-api/deno-sqlite";
-import { fromFileUrl } from "jsr:@std/path";
 import { DB, DB_PATH } from "./db.ts";
 import type {
 	AccountCredentials,
@@ -381,16 +380,22 @@ export class User {
 		endpoint: string,
 		httpmethod: string,
 		body: unknown,
-	): Promise<string> {
-		const res = await fetch(new URL(`https://${this.server}${endpoint}`), {
+		bodytype: "json" | "form",
+	): Promise<Response> {
+		if (bodytype === "form" && !(body instanceof FormData)) {
+			throw new Error("body must be FormData");
+		}
+		const requestInit: RequestInit = {
 			method: httpmethod,
-			body: JSON.stringify(body),
 			headers: {
 				Authorization: `Bearer ${this.token}`,
-				"Content-type": "application/json",
+				...(bodytype === "json" ? { "Content-Type": "application/json" } : {}),
 			},
-		});
-		return await res.text();
+		};
+		if (httpmethod === "POST") {
+			requestInit.body = bodytype === "form" ? (body as FormData) : JSON.stringify(body);
+		};
+		return await fetch(new URL(`https://${this.server}${endpoint}`), requestInit);
 	}
 
 	/**

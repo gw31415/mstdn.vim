@@ -1,7 +1,9 @@
 import camelcaseKeys from "npm:camelcase-keys";
-import { isNumber, isString } from "jsr:@core/unknownutil";
+import { isArrayOf, isNumber, isString } from "jsr:@core/unknownutil";
 import type { Denops } from "jsr:@denops/std";
 import * as batch from "jsr:@denops/std/batch";
+import { createCanvas, loadImage } from "jsr:@josefabio/deno-canvas";
+import Clipboard from "npm:@crosscopy/clipboard";
 import type { CreateStatusParams, Status } from "./entities/masto.d.ts";
 import {
 	TimelineRenderer,
@@ -45,11 +47,11 @@ export function main(denops: Denops) {
 					throw new Error("not string value");
 				}
 				const u = new User(user);
-				const res = await u.rest(endpoint, method, body);
+				const res = await u.rest(endpoint, method, body, "json");
 				if (/^\/api\/v1\/statuses\/\d+\/(un)?favourite$/g.test(endpoint)) {
 					// いいね関連リクエストのための特別処理
 					// 他のTLも更新されるようにする
-					const status: Status = camelcaseKeys(JSON.parse(res));
+					const status: Status = camelcaseKeys(await res.json());
 					const renderers = Array.from(BUFFERS.values()).flatMap(
 						({ user: u, renderer }) =>
 							u.toString() === user ? [renderer] : [],
@@ -60,8 +62,58 @@ export function main(denops: Denops) {
 						});
 					}
 				}
+				return await res.json();
 			} catch (e) {
 				await handleError(denops, e);
+			}
+		},
+		async uploadAttachment(user, dataOrUrl): Promise<number> {
+			const MAX_SIZE = 1200;
+			try {
+				if (!isString(user)) {
+					throw new Error("not string value");
+				}
+				const image = await (async () => {
+					if (isString(dataOrUrl)) {
+						if (dataOrUrl === "clipboard") {
+							if (!Clipboard.hasImage()) {
+								throw new Error("clipboard has no image");
+							}
+							return loadImage(
+								new Uint8Array(await Clipboard.getImageBinary()),
+							);
+						}
+						return loadImage(dataOrUrl);
+					}
+					if (isArrayOf(isNumber)(dataOrUrl)) {
+						return loadImage(new Uint8Array(dataOrUrl));
+					}
+				})();
+				if (!image) {
+					throw new Error("failed to load image");
+				}
+				const aspect = image.width() / image.height();
+				const width = aspect > 1 ? MAX_SIZE : MAX_SIZE * aspect;
+				const height = aspect > 1 ? MAX_SIZE / aspect : MAX_SIZE;
+				const canvas = createCanvas(width, height);
+				const ctx = canvas.getContext("2d");
+				ctx.drawImage(image, 0, 0, width, height);
+				const buf = canvas.toBuffer();
+				const blob = new Blob([buf], { type: "image/png" });
+				const formData = new FormData();
+				formData.append("file", blob, "image.png");
+				const u = new User(user);
+				const res = await u.rest("/api/v2/media", "POST", formData, "form");
+				if (res.status === 200 || res.status === 202) {
+					const data = await res.json();
+					return data.id;
+				}
+				const data = await res.json();
+				const error = data.error;
+				throw new Error(`failed to upload media: ${error}`);
+			} catch (e) {
+				await handleError(denops, e);
+				return -1;
 			}
 		},
 		user(bufnr): string {

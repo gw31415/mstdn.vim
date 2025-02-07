@@ -4,12 +4,16 @@
     "jsr:@core/unknownutil@^4.3.0": "4.3.0",
     "jsr:@denops/core@7": "7.0.1",
     "jsr:@denops/std@*": "7.2.0",
+    "jsr:@josefabio/deno-canvas@*": "1.5.2",
     "jsr:@mainframe-api/deno-sqlite@*": "3.9.1",
+    "jsr:@std/encoding@~0.224.2": "0.224.3",
     "jsr:@std/fs@1": "1.0.5",
     "jsr:@std/path@*": "1.0.7",
     "jsr:@std/path@^1.0.2": "1.0.7",
     "jsr:@std/semver@1": "1.0.3",
     "jsr:@std/ulid@1": "1.0.0",
+    "npm:@crosscopy/clipboard@*": "0.2.8",
+    "npm:@napi-rs/clipboard@*": "1.1.2",
     "npm:@types/async-lock@*": "1.4.2",
     "npm:@types/turndown@*": "5.0.5",
     "npm:async-lock@*": "1.4.1",
@@ -35,8 +39,17 @@
         "jsr:@std/ulid"
       ]
     },
+    "@josefabio/deno-canvas@1.5.2": {
+      "integrity": "0da3524c02af0a5294c820174fd1ac57a58441fd99bef8750e505567a10770f4",
+      "dependencies": [
+        "jsr:@std/encoding"
+      ]
+    },
     "@mainframe-api/deno-sqlite@3.9.1": {
       "integrity": "17869ee04209cab3c59a4fe68461d535a075f7ab24cd1455e22fb223b2cd2e2e"
+    },
+    "@std/encoding@0.224.3": {
+      "integrity": "5e861b6d81be5359fad4155e591acf17c0207b595112d1840998bb9f476dbdaf"
     },
     "@std/fs@1.0.5": {
       "integrity": "41806ad6823d0b5f275f9849a2640d87e4ef67c51ee1b8fb02426f55e02fd44e"
@@ -52,8 +65,90 @@
     }
   },
   "npm": {
+    "@crosscopy/clipboard-darwin-arm64@0.2.8": {
+      "integrity": "sha512-Y36ST9k5JZgtDE6SBT45bDNkPKBHd4UEIZgWnC0iC4kAWwdjPmsZ8Mn8e5W0YUKowJ/BDcO+EGm2tVTPQOQKXg=="
+    },
+    "@crosscopy/clipboard-darwin-universal@0.2.8": {
+      "integrity": "sha512-btGV1tLpJWZ4iKa66niahvpZpVRJzgQnYUE+PUX3YYZzaWD0ESuHuVtKVC8sR+b4dsXIiWW5skXbcRmLsF4rtA=="
+    },
+    "@crosscopy/clipboard-darwin-x64@0.2.8": {
+      "integrity": "sha512-0QMKf0XrLZrprYYXU4lgaTuzbnYPh9wH6PvsfDB1FZvWf6rOi0syTaBZYnoghbQe700qwLPEfBRjgljJ3Tn6oA=="
+    },
+    "@crosscopy/clipboard-linux-arm64-gnu@0.2.8": {
+      "integrity": "sha512-8YrU03MRsygymqEcHkNgqCqSCQbYRmJCnMXeS4i8FYeOkAxBEeRvPbHoNmI10uppXJZNZgfIKM7Qqk9tEHiwqQ=="
+    },
+    "@crosscopy/clipboard-linux-riscv64-gnu@0.2.8": {
+      "integrity": "sha512-/QWLhnb0QYVjEv5GOAC1q+1DaezYU8Th+IoDKUCsR5i43Cqm+g+N/I2K35yo3J+HHkK9XNbtIDZDXlFgK6tRUg=="
+    },
+    "@crosscopy/clipboard-linux-x64-gnu@0.2.8": {
+      "integrity": "sha512-j17eaF/onP/6VAGGKtxA1KmmkErmdjta9gMdMV/yUmgeBYzJ9fMpWUzbk2vmaOyXfhaSzR/sk1P6VLBmvCpqHg=="
+    },
+    "@crosscopy/clipboard-win32-arm64-msvc@0.2.8": {
+      "integrity": "sha512-MVkMyuYN3y5v0s4HrijM0iA8hZVmpUhHd8X4zKG30t4nE6MbOjOt/8EabMrVmGZlsLeOL2sa0o8Wo9bvhWU+vA=="
+    },
+    "@crosscopy/clipboard-win32-x64-msvc@0.2.8": {
+      "integrity": "sha512-/GpiB4B3lSgg7eCLDQw9NfFjtQFjo0S88IL+EK54Hx7ZgAP4Ad/ezP/8dw0cA+N/M6iPYy0reCIjW9st82/uxw=="
+    },
+    "@crosscopy/clipboard@0.2.8": {
+      "integrity": "sha512-0qRWscafAHzQ+DdfXX+YgPN2KDTIzWBNfN5Q6z1CgCWsRxtkwK8HfQUc00xIejfRWSGWPIxcCTg82hvg06bodg==",
+      "dependencies": [
+        "@crosscopy/clipboard-darwin-arm64",
+        "@crosscopy/clipboard-darwin-universal",
+        "@crosscopy/clipboard-darwin-x64",
+        "@crosscopy/clipboard-linux-arm64-gnu",
+        "@crosscopy/clipboard-linux-riscv64-gnu",
+        "@crosscopy/clipboard-linux-x64-gnu",
+        "@crosscopy/clipboard-win32-arm64-msvc",
+        "@crosscopy/clipboard-win32-x64-msvc"
+      ]
+    },
     "@mixmark-io/domino@2.2.0": {
       "integrity": "sha512-Y28PR25bHXUg88kCV7nivXrP2Nj2RueZ3/l/jdx6J9f8J4nsEGcgX0Qe6lt7Pa+J79+kPiJU3LguR6O/6zrLOw=="
+    },
+    "@napi-rs/clipboard-darwin-arm64@1.1.2": {
+      "integrity": "sha512-PNNM+RVE2KMCMjYhzohAA5kvV+qyxdpByHqvzuqvVoD9tFpCOCQrnFX8yRDXrf5O55Stj39amN3p1Q67TxWRLw=="
+    },
+    "@napi-rs/clipboard-darwin-x64@1.1.2": {
+      "integrity": "sha512-Htz6x1MZ/Z0n30uYW2e09lfOwyTHDJgYnBLIi7+iMnwuKN+AN3YpVCDLkaq2xzMndov2Zf9bVC1XE/c0ExCovQ=="
+    },
+    "@napi-rs/clipboard-linux-arm-gnueabihf@1.1.2": {
+      "integrity": "sha512-pJJMQzdUSL6VeYO6Hc6vQTmDbeV71BEpcOCaD2fxrGfL7I2tW3FDnl5b3AAqyeeVGelPvBqZXf98J4uiLwaaWA=="
+    },
+    "@napi-rs/clipboard-linux-arm64-gnu@1.1.2": {
+      "integrity": "sha512-/d4FJKnZ/hva7cBUSBv4DxkffBzTPGkjXG7YQwxRyic4CKfCeMdvEqg2t13spDBXlQYl1KXGGSfzdM1r3hR6AQ=="
+    },
+    "@napi-rs/clipboard-linux-arm64-musl@1.1.2": {
+      "integrity": "sha512-J8xzr9x3Wn9O3Tvb088mV/IxfIW1WK2WyOT1FvTGbpw+mpAzICJxDfEHkL3MBxV4w3JZXteGIEcU3xkC1XlrWA=="
+    },
+    "@napi-rs/clipboard-linux-x64-gnu@1.1.2": {
+      "integrity": "sha512-FwgiM/8uHbwJjy0yGKFAbrMu10oDeXA9zU+xQZ2R7NyLe9exHUk6/KgMNrUUr+eIJnkirGy0N77VorXjAtFUVA=="
+    },
+    "@napi-rs/clipboard-linux-x64-musl@1.1.2": {
+      "integrity": "sha512-3tMmRhpVb7iYWkEzobdoEpzFDGqNdtHP/LwLJYZOKreOBI8GszEIshbtjXIFhAfpD+x3RvjXiFowzNChX+CGNw=="
+    },
+    "@napi-rs/clipboard-win32-arm64-msvc@1.1.2": {
+      "integrity": "sha512-hFJQwQdLz8C/ocG5FjbKM0/+OxdnaaLOdUFWZaSa69s6XcF53U5uTvTUlmKhMNuqllqf9V3R3bF5Ada7yeuWlg=="
+    },
+    "@napi-rs/clipboard-win32-ia32-msvc@1.1.2": {
+      "integrity": "sha512-ZI3dbHhf0zVIYJDF4G3lGlJSUQgliGgfDWc+1SEKgjIEmmX3cBh/vaL2N9hpNh5LyNk+RBMD/+N7hOG1/e6UJw=="
+    },
+    "@napi-rs/clipboard-win32-x64-msvc@1.1.2": {
+      "integrity": "sha512-8dNtCAD6X7FaLrC4XBqp5ySU4PGB22Dpy0bGiPBOVNw8W9zw3EhtE0yNnGao03c4k/06GOOoFPeobWQfcja+hw=="
+    },
+    "@napi-rs/clipboard@1.1.2": {
+      "integrity": "sha512-q2AR+5XLWcUGoF5LVEc0kpm2tGRFnYPSNRO9Klhbw0BloyciicrGwMMO4khcQV5EIpYlmj9GEGfLoi/uWtE0DA==",
+      "dependencies": [
+        "@napi-rs/clipboard-darwin-arm64",
+        "@napi-rs/clipboard-darwin-x64",
+        "@napi-rs/clipboard-linux-arm-gnueabihf",
+        "@napi-rs/clipboard-linux-arm64-gnu",
+        "@napi-rs/clipboard-linux-arm64-musl",
+        "@napi-rs/clipboard-linux-x64-gnu",
+        "@napi-rs/clipboard-linux-x64-musl",
+        "@napi-rs/clipboard-win32-arm64-msvc",
+        "@napi-rs/clipboard-win32-ia32-msvc",
+        "@napi-rs/clipboard-win32-x64-msvc"
+      ]
     },
     "@types/async-lock@1.4.2": {
       "integrity": "sha512-HlZ6Dcr205BmNhwkdXqrg2vkFMN2PluI7Lgr8In3B3wE5PiQHhjRqtW/lGdVU9gw+sM0JcIDx2AN+cW8oSWIcw=="
