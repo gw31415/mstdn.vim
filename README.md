@@ -14,6 +14,11 @@ call dein#add("gw31415/mstdn.vim")
 
 " For Neovim users:
 call dein#add("MeanderingProgrammer/render-markdown.nvim") " Recommended: Better visibility of hashtags and other links
+lua << EOF
+require 'render-markdown'.setup {
+  file_types = { 'markdown', 'mstdn' }, -- Add mstdn filetype to render
+}
+EOF
 
 " Optional: Post editor window
 call dein#add("gw31415/mstdn-editor.vim")
