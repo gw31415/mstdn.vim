@@ -1,9 +1,9 @@
+import Clipboard from "npm:@crosscopy/clipboard";
+import { createCanvas, loadImage } from "npm:@napi-rs/canvas";
 import camelcaseKeys from "npm:camelcase-keys";
 import { isArrayOf, isNumber, isString } from "jsr:@core/unknownutil";
 import type { Denops } from "jsr:@denops/std";
 import * as batch from "jsr:@denops/std/batch";
-import { createCanvas, loadImage } from "jsr:@josefabio/deno-canvas";
-import Clipboard from "npm:@crosscopy/clipboard";
 import type { CreateStatusParams, Status } from "./entities/masto.d.ts";
 import {
 	TimelineRenderer,
@@ -92,16 +92,16 @@ export function main(denops: Denops) {
 				if (!image) {
 					throw new Error("failed to load image");
 				}
-				const aspect = image.width() / image.height();
+				const aspect = image.width / image.height;
 				const width = aspect > 1 ? MAX_SIZE : MAX_SIZE * aspect;
 				const height = aspect > 1 ? MAX_SIZE / aspect : MAX_SIZE;
 				const canvas = createCanvas(width, height);
 				const ctx = canvas.getContext("2d");
 				ctx.drawImage(image, 0, 0, width, height);
-				const buf = canvas.toBuffer();
-				const blob = new Blob([buf], { type: "image/png" });
+				const buf = canvas.toBuffer("image/jpeg");
+				const blob = new Blob([buf], { type: "image/jpeg" });
 				const formData = new FormData();
-				formData.append("file", blob, "image.png");
+				formData.append("file", blob, "image.jpeg");
 				const u = new User(user);
 				const res = await u.rest("/api/v2/media", "POST", formData, "form");
 				if (res.status === 200 || res.status === 202) {

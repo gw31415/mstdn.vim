@@ -1,19 +1,18 @@
 {
   "version": "4",
   "specifiers": {
+    "jsr:@core/unknownutil@*": "4.3.0",
     "jsr:@core/unknownutil@^4.3.0": "4.3.0",
     "jsr:@denops/core@7": "7.0.1",
-    "jsr:@denops/std@*": "7.2.0",
-    "jsr:@josefabio/deno-canvas@*": "1.5.2",
+    "jsr:@denops/std@*": "7.4.0",
     "jsr:@mainframe-api/deno-sqlite@*": "3.9.1",
-    "jsr:@std/encoding@~0.224.2": "0.224.3",
-    "jsr:@std/fs@1": "1.0.5",
-    "jsr:@std/path@*": "1.0.7",
-    "jsr:@std/path@^1.0.2": "1.0.7",
+    "jsr:@std/fs@1": "1.0.10",
+    "jsr:@std/path@*": "1.0.8",
+    "jsr:@std/path@^1.0.2": "1.0.8",
     "jsr:@std/semver@1": "1.0.3",
     "jsr:@std/ulid@1": "1.0.0",
     "npm:@crosscopy/clipboard@*": "0.2.8",
-    "npm:@napi-rs/clipboard@*": "1.1.2",
+    "npm:@napi-rs/canvas@*": "0.1.66",
     "npm:@types/async-lock@*": "1.4.2",
     "npm:@types/turndown@*": "5.0.5",
     "npm:async-lock@*": "1.4.1",
@@ -28,10 +27,10 @@
     "@denops/core@7.0.1": {
       "integrity": "ede39eec60de6d5bf0fbc0337d3e420a9689cc48afea8c71752e6c0fb630bde0"
     },
-    "@denops/std@7.2.0": {
-      "integrity": "acfd45e3f8b5a61010de3adf52fb3a3aff5003ca1ab645705576d2d0bdfd76de",
+    "@denops/std@7.4.0": {
+      "integrity": "6d7ae66af0286a440c14c0ba096b4336697bcd69e83e0fce21a41fb3dec10d65",
       "dependencies": [
-        "jsr:@core/unknownutil",
+        "jsr:@core/unknownutil@^4.3.0",
         "jsr:@denops/core",
         "jsr:@std/fs",
         "jsr:@std/path@^1.0.2",
@@ -39,23 +38,14 @@
         "jsr:@std/ulid"
       ]
     },
-    "@josefabio/deno-canvas@1.5.2": {
-      "integrity": "0da3524c02af0a5294c820174fd1ac57a58441fd99bef8750e505567a10770f4",
-      "dependencies": [
-        "jsr:@std/encoding"
-      ]
-    },
     "@mainframe-api/deno-sqlite@3.9.1": {
       "integrity": "17869ee04209cab3c59a4fe68461d535a075f7ab24cd1455e22fb223b2cd2e2e"
     },
-    "@std/encoding@0.224.3": {
-      "integrity": "5e861b6d81be5359fad4155e591acf17c0207b595112d1840998bb9f476dbdaf"
+    "@std/fs@1.0.10": {
+      "integrity": "bf041f9d7a0a460817f0421be8946d0e06011b3433e6c83a215628de5e3c7c2c"
     },
-    "@std/fs@1.0.5": {
-      "integrity": "41806ad6823d0b5f275f9849a2640d87e4ef67c51ee1b8fb02426f55e02fd44e"
-    },
-    "@std/path@1.0.7": {
-      "integrity": "76a689e07f0e15dcc6002ec39d0866797e7156629212b28f27179b8a5c3b33a1"
+    "@std/path@1.0.8": {
+      "integrity": "548fa456bb6a04d3c1a1e7477986b6cffbce95102d0bb447c67c4ee70e0364be"
     },
     "@std/semver@1.0.3": {
       "integrity": "7c139c6076a080eeaa4252c78b95ca5302818d7eafab0470d34cafd9930c13c8"
@@ -105,49 +95,49 @@
     "@mixmark-io/domino@2.2.0": {
       "integrity": "sha512-Y28PR25bHXUg88kCV7nivXrP2Nj2RueZ3/l/jdx6J9f8J4nsEGcgX0Qe6lt7Pa+J79+kPiJU3LguR6O/6zrLOw=="
     },
-    "@napi-rs/clipboard-darwin-arm64@1.1.2": {
-      "integrity": "sha512-PNNM+RVE2KMCMjYhzohAA5kvV+qyxdpByHqvzuqvVoD9tFpCOCQrnFX8yRDXrf5O55Stj39amN3p1Q67TxWRLw=="
+    "@napi-rs/canvas-android-arm64@0.1.66": {
+      "integrity": "sha512-77Yq9yaUYN90zCovYOpw7LhidJiswU9wLIWWBGF6iiEJyQdt6tkiXpGRZpOMJVO70afkcdc4T7532cxMIBhk0Q=="
     },
-    "@napi-rs/clipboard-darwin-x64@1.1.2": {
-      "integrity": "sha512-Htz6x1MZ/Z0n30uYW2e09lfOwyTHDJgYnBLIi7+iMnwuKN+AN3YpVCDLkaq2xzMndov2Zf9bVC1XE/c0ExCovQ=="
+    "@napi-rs/canvas-darwin-arm64@0.1.66": {
+      "integrity": "sha512-cz3aJ06b8BZGtwRxKTiE0OVUlB17MH8j+BnE4A5+wD9aD1guCCqECsz+k7tpXdAdTAYKRIz2pq6ZuiJ76NyUbQ=="
     },
-    "@napi-rs/clipboard-linux-arm-gnueabihf@1.1.2": {
-      "integrity": "sha512-pJJMQzdUSL6VeYO6Hc6vQTmDbeV71BEpcOCaD2fxrGfL7I2tW3FDnl5b3AAqyeeVGelPvBqZXf98J4uiLwaaWA=="
+    "@napi-rs/canvas-darwin-x64@0.1.66": {
+      "integrity": "sha512-szIWqJgFm2OTyGzM+hSiJOaOtjI73VYRC2KN30zZTt7i1+0sgpm5exK5ltDBPOmCdnLt7SbUfpInLj8VvxYlKA=="
     },
-    "@napi-rs/clipboard-linux-arm64-gnu@1.1.2": {
-      "integrity": "sha512-/d4FJKnZ/hva7cBUSBv4DxkffBzTPGkjXG7YQwxRyic4CKfCeMdvEqg2t13spDBXlQYl1KXGGSfzdM1r3hR6AQ=="
+    "@napi-rs/canvas-linux-arm-gnueabihf@0.1.66": {
+      "integrity": "sha512-h/TZJFc6JLvp8FwbA5mu+yXiblN0iKqshU7xzd6L+ks5uNYgjS7XWLkNiyPQkMaXQgVczOJfZy7r4NSPK3V8Hg=="
     },
-    "@napi-rs/clipboard-linux-arm64-musl@1.1.2": {
-      "integrity": "sha512-J8xzr9x3Wn9O3Tvb088mV/IxfIW1WK2WyOT1FvTGbpw+mpAzICJxDfEHkL3MBxV4w3JZXteGIEcU3xkC1XlrWA=="
+    "@napi-rs/canvas-linux-arm64-gnu@0.1.66": {
+      "integrity": "sha512-RGFUdBdi0Xmf+TfwZcB89Ap6hDYh4nzyJhXhNJIgve6ELrIPFhf7sDHvUHxjgW0YzczGoo+ophyCm03cJggu+w=="
     },
-    "@napi-rs/clipboard-linux-x64-gnu@1.1.2": {
-      "integrity": "sha512-FwgiM/8uHbwJjy0yGKFAbrMu10oDeXA9zU+xQZ2R7NyLe9exHUk6/KgMNrUUr+eIJnkirGy0N77VorXjAtFUVA=="
+    "@napi-rs/canvas-linux-arm64-musl@0.1.66": {
+      "integrity": "sha512-2cFViDIZ0xQlAHyJmyym+rj3p04V16vgAiz64sCAfwOOiW6e19agv1HQWHUsro3G2lF3PaHGAnp0WRPXGqLOfg=="
     },
-    "@napi-rs/clipboard-linux-x64-musl@1.1.2": {
-      "integrity": "sha512-3tMmRhpVb7iYWkEzobdoEpzFDGqNdtHP/LwLJYZOKreOBI8GszEIshbtjXIFhAfpD+x3RvjXiFowzNChX+CGNw=="
+    "@napi-rs/canvas-linux-riscv64-gnu@0.1.66": {
+      "integrity": "sha512-Vm5ZWS2RDPeBpnfx83eJpZfJT07xl0jqp8d83PklKqiDNa3BmDZZ/uuI40/ICgejGLymXXYo5N21b7oAxhRTSA=="
     },
-    "@napi-rs/clipboard-win32-arm64-msvc@1.1.2": {
-      "integrity": "sha512-hFJQwQdLz8C/ocG5FjbKM0/+OxdnaaLOdUFWZaSa69s6XcF53U5uTvTUlmKhMNuqllqf9V3R3bF5Ada7yeuWlg=="
+    "@napi-rs/canvas-linux-x64-gnu@0.1.66": {
+      "integrity": "sha512-/ptGBhErNBCgWff3khtuEjhiiYWf70oWvBPRj8y5EMB0nLYpve7RxxFnavVvxN49kJ0MQHRIwgfyd47RSOOKPw=="
     },
-    "@napi-rs/clipboard-win32-ia32-msvc@1.1.2": {
-      "integrity": "sha512-ZI3dbHhf0zVIYJDF4G3lGlJSUQgliGgfDWc+1SEKgjIEmmX3cBh/vaL2N9hpNh5LyNk+RBMD/+N7hOG1/e6UJw=="
+    "@napi-rs/canvas-linux-x64-musl@0.1.66": {
+      "integrity": "sha512-XunvXisTkIG+bpq6BcXmsUstoLX3RLS6N9Uz9Pg9RpWIMeM6ObR5shr3NgpGRJq93769I1hS4mJW0DX2Au3WBw=="
     },
-    "@napi-rs/clipboard-win32-x64-msvc@1.1.2": {
-      "integrity": "sha512-8dNtCAD6X7FaLrC4XBqp5ySU4PGB22Dpy0bGiPBOVNw8W9zw3EhtE0yNnGao03c4k/06GOOoFPeobWQfcja+hw=="
+    "@napi-rs/canvas-win32-x64-msvc@0.1.66": {
+      "integrity": "sha512-3n34watNFqpwACDA+pt4jfQD6zR8PzfK86FBajdsgDVVZhSp6ohgbbJv+eUrXM08VUtjxTq7+U4sWspTu9+4Ug=="
     },
-    "@napi-rs/clipboard@1.1.2": {
-      "integrity": "sha512-q2AR+5XLWcUGoF5LVEc0kpm2tGRFnYPSNRO9Klhbw0BloyciicrGwMMO4khcQV5EIpYlmj9GEGfLoi/uWtE0DA==",
+    "@napi-rs/canvas@0.1.66": {
+      "integrity": "sha512-NE/eQKLbUS+LCbMHRa5HnR7cc1Q4ibg/qfLUN4Ukl3CC0lq6LfHE0YbvFm/l4i5RyyS+aUjL+8IuZDD9EH3amg==",
       "dependencies": [
-        "@napi-rs/clipboard-darwin-arm64",
-        "@napi-rs/clipboard-darwin-x64",
-        "@napi-rs/clipboard-linux-arm-gnueabihf",
-        "@napi-rs/clipboard-linux-arm64-gnu",
-        "@napi-rs/clipboard-linux-arm64-musl",
-        "@napi-rs/clipboard-linux-x64-gnu",
-        "@napi-rs/clipboard-linux-x64-musl",
-        "@napi-rs/clipboard-win32-arm64-msvc",
-        "@napi-rs/clipboard-win32-ia32-msvc",
-        "@napi-rs/clipboard-win32-x64-msvc"
+        "@napi-rs/canvas-android-arm64",
+        "@napi-rs/canvas-darwin-arm64",
+        "@napi-rs/canvas-darwin-x64",
+        "@napi-rs/canvas-linux-arm-gnueabihf",
+        "@napi-rs/canvas-linux-arm64-gnu",
+        "@napi-rs/canvas-linux-arm64-musl",
+        "@napi-rs/canvas-linux-riscv64-gnu",
+        "@napi-rs/canvas-linux-x64-gnu",
+        "@napi-rs/canvas-linux-x64-musl",
+        "@napi-rs/canvas-win32-x64-msvc"
       ]
     },
     "@types/async-lock@1.4.2": {
@@ -189,14 +179,5 @@
     "xdg-basedir@5.1.0": {
       "integrity": "sha512-GCPAHLvrIH13+c0SuacwvRYj2SxJXQ4kaVTT5xgL3kPrz56XxkF21IGhjSE1+W0aw7gpBWRGXLCPnPby6lSpmQ=="
     }
-  },
-  "remote": {
-    "https://deno.land/x/dir@1.5.2/cache_dir/mod.ts": "8a82889db79c547fbbd3536c9c964047657b19fb59365c5fa59afc46082f9fe5",
-    "https://deno.land/x/unknownutil@v3.18.1/_typeutil.ts": "774d207c47fb5350f468cdcf68e80f1bc6e278f6bc77c04d17a601618c49d2c1",
-    "https://deno.land/x/unknownutil@v3.18.1/inspect.ts": "33e61bdfed94cd586d66600813b528fa93046a2802d8144277b92f0fa5e5f10e",
-    "https://deno.land/x/unknownutil@v3.18.1/is.ts": "0c552cf85f8eeca86b41d892da627168185eaabfd79931e39cfdf00a70de6269",
-    "https://deno.land/x/unknownutil@v3.18.1/metadata.ts": "04fcfbca1338e44b4067be4bde51b863dc4c91b279541c78620e617d3e77e01a",
-    "https://deno.land/x/unknownutil@v3.18.1/mod.ts": "c38cc1fe09a108ecca944adde2dd2f37c1c00a83c964f0a3b8a7debd62d33fc8",
-    "https://deno.land/x/unknownutil@v3.18.1/util.ts": "051fb654a110aa8bc9e034ce03aea2d39349fdf723da6ce6b783e5299327444d"
   }
 }
